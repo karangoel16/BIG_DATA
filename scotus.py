@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 
-class ubuntu:
+class scotus:
     def __init__(self,dirName):
         '''
             dirName is the place where we will get ubuntu dataset
@@ -13,22 +13,17 @@ class ubuntu:
             test="normal";
         self.max_dir=10;
         self.conversation=[];#this is the data dictionary
-        dir=os.path.join(dirName,'dialogs');
+        dir=os.path.join(dirName,'');
         #this is to call for how many directories you want to 
         num_sub=0;
         if(not os.path.exists(dir)):
             print("Incorrect Directory")
             return ;
         else:
-            for sub in os.scandir(dir):#this is to open the directory and scan the sub directory
-                if sub.is_dir():
-                    for f in os.scandir(sub.path):#this is to scan all the files within the ubuntu data file
-                        if f.name.endswith('.tsv'):
-                            #now we have to add the code to read the conversation from the file
-                            #now we can append in the lines from the loadfunction to the conversation which we can load later
-                            self.conversation.append({"line":self.loadlines(f)});
-                            if test=="-t":#this is for the test case 
-                                return ;
+            for f in os.scandir(dir):
+                self.conversation.append({'line':self.loadlines(f)});
+            print(self.conversation);
+                
     #the function has been kept with similar names in all the corpus to keep uniformity
     def loadlines(self,filename):
         '''
@@ -40,10 +35,8 @@ class ubuntu:
             #this will open the lines to extract the lines from the user
             for line in f:
                 #point 1: we are able to reach to the line level now we need to extract the lines from the user
-                values = line.split("\t");#this will split the lines in tabs
-                lines.append({"text":values[3]});
+                values = line.split(":");#this will split the lines in tabs
+                lines.append({"text":values[1]});
         return lines;
     def getconversation(self):
         return self.conversation;
-t=ubuntu('Corpus/ubuntu');
-print(t.getconversation());

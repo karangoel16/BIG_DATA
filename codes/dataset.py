@@ -139,7 +139,6 @@ class dataset:
             self.create_corpus(t.getconversation());
             self.save_dataset();
         else:
-            #we need to load data set here
             self.load_dataset();#this is place where we will load the dataset
             
     def create_corpus(self,conversations):
@@ -166,27 +165,34 @@ class dataset:
 
     def save_dataset(self):
         path=self.var_corpus_dict;
-        with open(path,'wb') as f:
-            data={'word_id':self.var_word_id,
-                  'id_word':self.var_id_word,
-                  'sample':self.var_sam_train,
-                  '<pad>':self.var_pad,
-                  '<unknown>':self.var_unknown,
-                  '<eos>':self.var_eos,
-                  '<go>':self.var_token
-                 };
-            pickle.dump(data,f,-1);
+        try:
+            with open(path,'wb') as f:
+                data={'word_id':self.var_word_id,
+                      'id_word':self.var_id_word,
+                      'sample':self.var_sam_train,
+                      '<pad>':self.var_pad,
+                      '<unknown>':self.var_unknown,
+                      '<eos>':self.var_eos,
+                      '<go>':self.var_token
+                     };
+                pickle.dump(data,f,-1);
+        except:
+            print("Error in save dataset");
 
     def load_dataset(self):
-        with open(os.path.join(self.DirName,self.var_corpus_dict),"rb") as f:
-            data=pickle.load(f);
-            self.var_word_id=data['word_id'];
-            self.var_id_word=data['id_word'];
-            self.var_sam_train=data['sample']
-            self.var_pad=data['<pad>'];
-            self.var_token=data['<go>'];
-            self.var_eos=data['<eos>'];
-            self.var_unknown=data['<unknown>'];
+        path=self.var_corpus_dict;
+        try:
+            with open(path,"rb") as f:
+                data=pickle.load(f);
+                self.var_word_id=data['word_id'];
+                self.var_id_word=data['id_word'];
+                self.var_sam_train=data['sample']
+                self.var_pad=data['<pad>'];
+                self.var_token=data['<go>'];
+                self.var_eos=data['<eos>'];
+                self.var_unknown=data['<unknown>'];
+        except:
+            print("Error in load dataset");
     
     def next_batch(self):
         random.shuffle(self.var_sam_train);

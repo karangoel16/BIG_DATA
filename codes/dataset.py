@@ -3,6 +3,7 @@ import nltk
 import pickle
 import pandas as pd
 import csv
+import random
 from cornell import cornell_data
 from scotus import scotus
 from ubuntu import ubuntu
@@ -27,6 +28,7 @@ class dataset:
                 5.unique
                 6.pad
                 7.unknown
+                8.Sample Training
             
         '''
         if not os.path.exists(DirName):
@@ -41,6 +43,9 @@ class dataset:
         print("3. Cornel");
         choice=int(input());
         dict_temp={};
+        '''
+            This is place where we add the different corpus
+        '''
         with open((DirName+"/Database/CorpusData.csv")) as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -59,33 +64,37 @@ class dataset:
         self.var_unique=-1;
         self.var_unknown=-1;
         self.var_token=-1;
+        self.var_sam_train=[];
         self.load_data(); 
         #except:
         #    print("Not able to connect to the database (check github)");
         #    return;
     
     def conv_set(self,conversation):
-        
-        for i in range(len(conversation)-1):
-            print(conversation["lines"][i])
-            #var_user_1=conversation["lines"][i];#this is for user 1
+        #print(len(conversation))
+        '''
+            here we extract the lines and then from lines gives token to the sentence which are correct 
+        '''
+        for i in range(len(conversation["lines"])-1):
+            #print(i);
+            #print(conversation["lines"][i])
+            var_user_1=conversation["lines"][i];#this is for user 1
             
-            #var_user_2=conversation["lines"][i+1];#this is for user 2
+            var_user_2=conversation["lines"][i+1];#this is for user 2
             
-            #var_user_1_word=self.token_(var_user_1);
+            var_user_1_word=self.token_(var_user_1["text"]);
             
-            #var_user_2_word=self.token_(var_user_2);
-            
-            #if var_user_1_word and var_user_2_word:
+            var_user_2_word=self.token_(var_user_2["text"],True);
+            if var_user_1_word and var_user_2_word:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
+                self.var_sam_train.append([var_user_1_word,var_user_2_word]);
             
     def token_(self,line,var_target=False):
         
         var_word=[];
         
         var_sent_token=nltk.sent_tokenize(line);
-        
-        for t in len(var_sent_token):
+        for t in range(len(var_sent_token)):
             
             if not var_target:
                 t=len(var_sent_token)-1-t;#we will rotate the array for the false
@@ -98,26 +107,24 @@ class dataset:
                 
                 for token in var_token:
                 
-                    var_temp.append(self.var_word_id(token));
+                    var_temp.append(self.word_id(token));
                 
                 if var_target:
                 
-                    word=word+var_temp;
+                    var_word=var_word+var_temp;
                 
                 else:
-                    word=var_temp+word; 
+                    var_word=var_temp+var_word; 
             
             else:
                 
                 break;#when the length goes above the maxlength then we break the charachter
         
-        return word;
+        return var_word;
     
     def load_data(self):
         exist_dataset=False;#if the data file does not exist
-        path=self.DirName+self.var_corpus_dict
-        path=os.path.join(path,"")
-        if os.path.exists(path):
+        if os.path.exists(self.var_corpus_dict):
             exist_dataset=True;
         if not exist_dataset:
             path=self.var_corpus_loc;
@@ -130,6 +137,7 @@ class dataset:
             else:
                 print("Not a valid option");
             self.create_corpus(t.getconversation());
+            self.save_dataset();
         else:
             #we need to load data set here
             self.load_dataset();#this is place where we will load the dataset
@@ -139,8 +147,8 @@ class dataset:
         self.var_token = self.word_id('<go>')  # Start of sequence
         self.var_eos = self.word_id('<eos>')  # End of sequence
         self.var_unknown = self.word_id('<unknown>')  # Word dropped from vocabulary
-        #for conversation in conversations:
-        #    self.conv_set(conversation);
+        for conversation in conversations:
+            self.conv_set(conversation);
             
     def word_id(self,word,add=True):
         word=word.lower();#to convert word into the lower charachter of words
@@ -157,18 +165,30 @@ class dataset:
         return word_len;#this is to add the word back into the dictionary
 
     def save_dataset(self):
-        with open(os.path.join(DirName,"test"),'wb') as f:
-            data={'word_id':seld.var_word_id,
+        path=self.DirName+self.var_corpus_dict;
+        with open(path,'wb') as f:
+            data={'word_id':self.var_word_id,
                   'id_word':self.var_id_word,
+                  'sample':self.var_sam_train,
+                  '<pad>':self.var_pad,
+                  '<unknown>':self.var_unknown,
+                  '<eos>':self.var_eos,
+                  '<go>':self.var_token
                  };
             pickle.dump(data,f,-1);
 
     def load_dataset(self):
-        with open(os.path.join(DirName,"test"),"rb") as f:
-                  data=pickle.load(f);
-                  self.var_word_id=data['word_id'];
-                  self.var_id_word=data['id_word'];
-        
-        
+        with open(os.path.join(self.DirName,self.var_corpus_dict),"rb") as f:
+            data=pickle.load(f);
+            self.var_word_id=data['word_id'];
+            self.var_id_word=data['id_word'];
+            self.var_sam_train=data['sample']
+            self.var_pad=data['<pad>'];
+            self.var_token=data['<go>'];
+            self.var_eos=data['<eos>'];
+            self.var_unknown=data['<unknown>'];
+    
+    def next_batch(self):
+        random.shuffle(self.var_sam_train);
         
 t=dataset('/home/karan/Documents/GIT_HUB/BIG_DATA');#we have to enter the path Name    

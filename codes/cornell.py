@@ -10,7 +10,7 @@ class cornell_data:
         LINE_FIELD=["lineID","characterID","movieID","character","text"]
         CONVERSATION_FIELD=["character1ID","character2ID","movieID","utteranceIDs"];
         self.lines = self.loadlines(os.path.join(dirName,'movie_lines.txt') , LINE_FIELD)
-        self.conversatation=self.loadconversation(os.path.join(dirName,'movie_conversations.txt'),CONVERSATION_FIELD);
+        self.conversation=self.loadconversation(os.path.join(dirName,'movie_conversations.txt'),CONVERSATION_FIELD);
    
     def loadlines(self,filename,fields):#done with preparing the data of cornel
         '''Here pathname is the file name for the file '''
@@ -47,3 +47,5 @@ class cornell_data:
     def getconversation(self):
         return self.conversation;
         
+#t=cornell_data('/home/karan/Documents/GIT_HUB/BIG_DATA/Corpus/Cornel/');
+#print(t.getconversation());

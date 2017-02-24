@@ -7,6 +7,8 @@ class scotus:
         '''
             dirName is the place where we will get ubuntu dataset
         '''
+        if not dirName:
+            return ;#this will return the function
         try:
             test=sys.argv[1];
         except:
@@ -16,13 +18,14 @@ class scotus:
         dir=os.path.join(dirName,'');
         #this is to call for how many directories you want to 
         num_sub=0;
+        #print(dir);
         if(not os.path.exists(dir)):
-            print("Incorrect Directory")
+            print("FILE NOT FOUND")
             return ;
         else:
             for f in os.scandir(dir):
-                self.conversation.append({'line':self.loadlines(f)});
-            print(self.conversation);
+                self.conversation.append({'lines':self.loadlines(f)});
+            #print(self.conversation);
                 
     #the function has been kept with similar names in all the corpus to keep uniformity
     def loadlines(self,filename):

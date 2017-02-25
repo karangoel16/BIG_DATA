@@ -2,3 +2,4 @@
 /Corpus/*
 /Database/*
 *.ipynb
+*.csv

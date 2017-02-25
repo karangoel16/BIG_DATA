@@ -111,7 +111,6 @@ x_axis=[]
 # In[7]:
 
 num_epochs=10000
- 
 for k in range(1,num_epochs):
 
     #Generate Data for each epoch
@@ -134,12 +133,16 @@ for k in range(1,num_epochs):
         val_score.append(sum(c_val))
         x_axis.append(k)
 
-
 # In[8]:
 
-print ("Final Train cost: {}, on Epoch {}".format(train_score[-1],k))
-print ("Final Validation cost: {}, on Epoch {}".format(val_score[-1],k))
-plt.plot(train_score, 'r-', val_score, 'b-')
+#print ("Final Train cost: {}, on Epoch {}".format(train_score[-1],k))
+#print ("Final Validation cost: {}, on Epoch {}".format(val_score[-1],k))
+line1=plt.plot(train_score,label='Training Value')
+line2=plt.plot(val_score,label='Validation Value')
+plt.legend(loc=3)
+plt.ylabel('Accuracies->');
+plt.xlabel('Iterations(x100)->');
+#plt.plot(train_score, 'r-', val_score, 'b-')
 plt.show()
 
 

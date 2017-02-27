@@ -15,7 +15,7 @@ def reddit_user_comment(reddit, user_name, count=None, comment_id=None):
         comments = reddit.get("/user/{}?count={}&after=t1_{}".format(user_name, count, comment_id))
     return comments
 
-def get_comments(redit, output_file):
+def get_comments(redit, output_file, reddit_user="thedukeofetown"):
     with open(output_file, "w") as op_file:
         comments_count = 0
         previous_comment_id = None
@@ -23,9 +23,9 @@ def get_comments(redit, output_file):
         comment_list = []
         while True:
             if total_comments == 0:
-                comments = reddit_user_comment(redit, "thedukeofetown")
+                comments = reddit_user_comment(redit, reddit_user)
             else:
-                comments = reddit_user_comment(redit, "thedukeofetown",
+                comments = reddit_user_comment(redit, reddit_user,
                                                count=total_comments,
                                                comment_id=previous_comment_id)
             comments_count = len(comments)

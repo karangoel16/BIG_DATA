@@ -17,7 +17,7 @@ class ubuntu:
         #this is to call for how many directories you want to 
         num_sub=0;
         if(not os.path.exists(dir)):
-            print("Incorrect Directory")
+            print("FILE NOT EXIST")
             return ;
         else:
             for sub in os.scandir(dir):#this is to open the directory and scan the sub directory
@@ -45,5 +45,3 @@ class ubuntu:
         return lines;
     def getconversation(self):
         return self.conversation;
-t=ubuntu('Corpus/ubuntu');
-print(t.getconversation());

@@ -1,12 +1,16 @@
 import os
 class cornell_data:
     def __init__(self,dirName):
+        dirName=os.path.join(dirName,"");#changed it to the path name
+    #here we will check if we do not enter any dirName or directory doesn't exist we simply come out of the cornell
+        if not os.path.exists(dirName):
+            return ;
         self.lines={};
         self.conversation={};
         LINE_FIELD=["lineID","characterID","movieID","character","text"]
         CONVERSATION_FIELD=["character1ID","character2ID","movieID","utteranceIDs"];
-        self.lines = self.loadlines(os.path.join(os.getcwd()+dirName,'movie_lines.txt') , LINE_FIELD)
-        self.conversatation=self.loadconversation(os.path.join(os.getcwd()+dirName,'movie_conversations.txt'),CONVERSATION_FIELD);
+        self.lines = self.loadlines(os.path.join(dirName,'movie_lines.txt') , LINE_FIELD)
+        self.conversation=self.loadconversation(os.path.join(dirName,'movie_conversations.txt'),CONVERSATION_FIELD);
    
     def loadlines(self,filename,fields):#done with preparing the data of cornel
         '''Here pathname is the file name for the file '''
@@ -20,7 +24,7 @@ class cornell_data:
                         lineObj[field]=values[i];
                     lines[lineObj['lineID']]=lineObj;
         except FileNotFoundError:
-            print("FILE NOT FOUND");
+            print("FILE NOT FOUND "+ dirName);
         return lines;
     
     def loadconversation(self,filename,fields):
@@ -35,12 +39,13 @@ class cornell_data:
                     lineIds = eval(convObj["utteranceIDs"]);
                     convObj["lines"] = []
                     for lineID in lineIds:
-                        print(self.lines[lineID])
                         convObj["lines"].append(self.lines[lineID]);
                     conversation.append(convObj);
         except FileNotFoundError:
-            print('File Not Found')
+            print('FILE NOT FOUND')
         return conversation;
     def getconversation(self):
         return self.conversation;
         
+#t=cornell_data('/home/karan/Documents/GIT_HUB/BIG_DATA/Corpus/Cornel/');
+#print(t.getconversation());

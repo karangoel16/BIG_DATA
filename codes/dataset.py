@@ -4,6 +4,7 @@ import pickle
 import pandas as pd
 import csv
 import random
+import configparser as cp
 from cornell import cornell_data
 from scotus import scotus
 from ubuntu import ubuntu
@@ -35,37 +36,30 @@ class dataset:
             print('INCORRECT PATH ENTERED FOR THE CORPUS');
             return ;
         self.DirName=DirName;
-        #try:
-            #corpus_data=read.table((DirName+"/Database/CorpusData.csv"));
-        print("Enter the number of the database you want to read?");
-        print("1. Ubuntu");
-        print("2. Scotus");
-        print("3. Cornel");
-        choice=int(input());
-        dict_temp={};
-        '''
-            This is place where we add the different corpus
-        '''
-        with open((DirName+"/Database/CorpusData.csv")) as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if reader.line_num==(choice+1):
-                    dict_temp=row;
-                    break;
-        self.var_corpus_name=dict_temp['CorpusName'];
-        self.var_corpus_dict=dict_temp['Dictionary_Add'];
-        self.var_corpus_loc=dict_temp['Corpus Unique Path'];
-        '''We have to take maximum length from the user as the arguments in the final draft of the program'''
-        self.var_max_length=10;
-        self.var_word_id={};#this is to compute the number to word
-        self.var_id_word={};#this is to compute the word to number
+        Config = cp.ConfigParser();
+        Config.read(DirName+"/Database/Config.ini");
+        self.choice=int(Config.get('Dataset','choice'));
         self.var_pad=-1;
         self.var_eos=-1;
         self.var_unique=-1;
         self.var_unknown=-1;
         self.var_token=-1;
         self.var_sam_train=[];
+        self.var_word_id={};#this is to compute the number to word
+        self.var_id_word={};#this is to compute the word to number
+        self.var_max_length=int(Config.get('Dataset','maxLength'));
+        dict_temp={};
+        self.var_dict=self.DirName+"/Database/file_dict.p"#this is the value where we will sa
         self.load_data(); 
+
+        '''
+            This is place where we add the different corpus
+        '''
+        
+        
+        '''We have to take maximum length from the user as the arguments in the final draft of the program'''
+
+
         #except:
         #    print("Not able to connect to the database (check github)");
         #    return;
@@ -85,6 +79,7 @@ class dataset:
             var_user_1_word=self.token_(var_user_1["text"]);
             
             var_user_2_word=self.token_(var_user_2["text"],True);
+            print(var_user_1_word);
             if var_user_1_word and var_user_2_word:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
                 self.var_sam_train.append([var_user_1_word,var_user_2_word]);
@@ -124,9 +119,18 @@ class dataset:
     
     def load_data(self):
         exist_dataset=False;#if the data file does not exist
-        if os.path.exists(self.var_corpus_dict):
+        if os.path.exists(self.var_dict):
             exist_dataset=True;
         if not exist_dataset:
+            with open((self.DirName+"/Database/CorpusData.csv")) as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if reader.line_num==(self.choice+1) or self.choice==4:
+                        dict_temp=row;
+                        self.var_corpus_name=dict_temp['CorpusName'];
+                        self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
+                        self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
+                        break;
             path=self.var_corpus_loc;
             if self.var_corpus_name=='cornell':
                 t=cornell_data(path);
@@ -164,23 +168,24 @@ class dataset:
         return word_len;#this is to add the word back into the dictionary
 
     def save_dataset(self):
-        path=self.var_corpus_dict;
-        try:
-            with open(path,'wb') as f:
-                data={'word_id':self.var_word_id,
-                      'id_word':self.var_id_word,
-                      'sample':self.var_sam_train,
-                      '<pad>':self.var_pad,
-                      '<unknown>':self.var_unknown,
-                      '<eos>':self.var_eos,
-                      '<go>':self.var_token
-                     };
-                pickle.dump(data,f,-1);
-        except:
-            print("Error in save dataset");
+        path=self.var_dict;
+        #try:
+        with open(path,'wb') as f:
+            data={
+                  'word_id':self.var_word_id,
+                  'id_word':self.var_id_word,
+                  'sample':self.var_sam_train,
+                  '<pad>':self.var_pad,
+                  '<unknown>':self.var_unknown,
+                  '<eos>':self.var_eos,
+                  '<go>':self.var_token
+                 };
+            pickle.dump(data,f,-1);
+        #except:
+        #    print("Error in save dataset");
 
     def load_dataset(self):
-        path=self.var_corpus_dict;
+        path=self.var_dict;
         try:
             with open(path,"rb") as f:
                 data=pickle.load(f);

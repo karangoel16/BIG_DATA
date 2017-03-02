@@ -19,7 +19,7 @@ auth.set_access_token(A_key,A_token);
 api=tweepy.API(auth);
 class bot_stream(StreamListener):
     def post(self,username,tid):
-        api.update_status('@'+username+' i am yet to begin giving answers!!!!',in_reply_to_status_id=tid);
+        api.update_status('@'+username+' i am yet to begin answering!!!!',in_reply_to_status_id=tid);
     def on_data(self,data):
         json_load = json.loads(data)
         #print(json_load['text']);

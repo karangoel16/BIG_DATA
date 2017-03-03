@@ -8,9 +8,18 @@ import configparser as cp
 from cornell import cornell_data
 from scotus import scotus
 from ubuntu import ubuntu
+import numpy as np
 
+class batch:
+    """Struct containing batches info
+    """
+    def __init__(self):
+        self.var_encoder = []
+        self.var_decoder = []
+        self.var_target = []
+        self.var_weight = []
+        
 class dataset:
-    
     '''
         We need the DirName that is the dir where our code is present so that we can run the set on it
     '''
@@ -39,9 +48,10 @@ class dataset:
         Config = cp.ConfigParser();
         Config.read(DirName+"/Database/Config.ini");
         self.choice=int(Config.get('Dataset','choice'));
+        self.batch_size=int(Config.get('Dataset','batch_size'));
         self.var_pad=-1;
         self.var_eos=-1;
-        self.var_unique=-1;
+        #self.var_unique=-1;
         self.var_unknown=-1;
         self.var_token=-1;
         self.var_sam_train=[];
@@ -49,7 +59,8 @@ class dataset:
         self.var_id_word={};#this is to compute the word to number
         self.var_max_length=int(Config.get('Dataset','maxLength'));
         dict_temp={};
-        self.var_dict=self.DirName+"/Database/file_dict.p"#this is the value where we will sa
+        self.var_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
+#we will save all the values in the dictionary in one go and will save this file
         self.load_data(); 
 
         '''
@@ -63,7 +74,6 @@ class dataset:
         #except:
         #    print("Not able to connect to the database (check github)");
         #    return;
-    
     def conv_set(self,conversation):
         #print(len(conversation))
         '''
@@ -79,10 +89,11 @@ class dataset:
             var_user_1_word=self.token_(var_user_1["text"]);
             
             var_user_2_word=self.token_(var_user_2["text"],True);
-            print(var_user_1_word);
             if var_user_1_word and var_user_2_word:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
                 self.var_sam_train.append([var_user_1_word,var_user_2_word]);
+                #print(var_user_1_word)
+                print(self.seq_sent(var_user_1_word))
             
     def token_(self,line,var_target=False):
         
@@ -145,6 +156,7 @@ class dataset:
         else:
             self.load_dataset();#this is place where we will load the dataset
             
+            
     def create_corpus(self,conversations):
         self.var_pad = self.word_id('<pad>')  # Padding (Warning: first things to add > id=0 !!)
         self.var_token = self.word_id('<go>')  # Start of sequence
@@ -152,6 +164,7 @@ class dataset:
         self.var_unknown = self.word_id('<unknown>')  # Word dropped from vocabulary
         for conversation in conversations:
             self.conv_set(conversation);
+            
             
     def word_id(self,word,add=True):
         word=word.lower();#to convert word into the lower charachter of words
@@ -198,8 +211,69 @@ class dataset:
                 self.var_unknown=data['<unknown>'];
         except:
             print("Error in load dataset");
-    
-    def next_batch(self):
-        random.shuffle(self.var_sam_train);
+#def sent2enco(self,sent):
         
-t=dataset('/home/karan/Documents/GIT_HUB/BIG_DATA');#we have to enter the path Name    
+#This program is to return all values to the chatbot where it will call again
+    def id_seq(self,var_dec):
+        var_seq=[];
+        for i in var_dec:
+            var_seq.append(np.argmax(var_dec))
+        return var_seq;
+    
+    def seq_sent(self,seq,cl=False,reverse=False):
+        if not seq:
+            return None;
+        if not cl:
+            return ' '.join([self.var_id_word[idq] for idq in seq]);
+        var_sent=[];
+        for word_id in seq:
+            if word_id == self.var_eos:
+                break;
+            elif word_id != self.var_pad and word_id != self.var_token:
+                var_sent.append(self.var_id_word[word_id])
+        if reverse:  # Reverse means input so no <eos> (otherwise pb with previous early stop)
+            var_sent.reverse()
+        return self.detokenize(var_sent);
+    
+    def setence_id(self,var_sent):
+        if sentence == "":
+            return None;#this is to check if the sentence which we have sent has some value in the string or not
+        var_tokens=nltk.word_tokenize(sent);
+        if len(var_tokens) > self.var_max_lengh:
+            return None; #since we have not trained our data set on this datas
+        word_id=[];
+        for t in var_tokens:
+            word_id=self.word_id(t,False);#we do not want new element should be added to the dictionary as this might not be correct word too
+        '''We need to create batch so that it can be sent to the model inside'''
+        
+    def getBatches(self):
+        """Prepare the batches for the current epoch
+        Return:
+            list<Batch>: Get a list of the batches for the next epoch
+        """
+        random.shuffle(self.var_sam_train);
+
+        batches = []
+
+        def genNextSamples():
+            """ Generator over the mini-batch training samples
+            """
+            for i in range(0, len(self.var_sam_train), self.batch_size):
+                yield self.var_sam_train[i:min(i + self.batch_size,  len(self.var_sam_train))]
+
+        for samples in genNextSamples():
+            batch = self._createBatch(samples)#this function is yet to be implemented
+            batches.append(batch)
+        return batches
+   
+    def detokenize(self, tokens):
+        return ''.join([
+            ' ' + t if not t.startswith('\'') and
+                       t not in string.punctuation
+                    else t
+            for t in tokens]).strip().capitalize()
+        
+        
+if __name__ == "__main__":        
+    t=dataset('/home/karan/Downloads/GIT_HUB/BIG_DATA');#we have to enter the path Name    
+    print(t.getBatches())

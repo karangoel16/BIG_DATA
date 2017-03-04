@@ -29,6 +29,7 @@ class Bot:
 
         # Filename and directories constants
         # Todo:- Move following to seperate config files
+        self.root_dir
         self.MODEL_DIR_BASE = 'save/model'
         self.MODEL_NAME_BASE = 'model'
         self.MODEL_EXT = '.ckpt'
@@ -92,6 +93,39 @@ class Bot:
 
         self._save_session(session)
 
+    def prediction_set(self, session):
+        with open(os.path.join(self.root_dir, self.TEST_IN_NAME), 'r') as f:
+            lines = f.readlines()
+
+        model_list = self._get_model_list()
+        if not modelList:
+            print('Please Train the model first before predicting values')
+            return
+
+        for model in model_list:
+            print('Restoring previous model from {}'.format(model))
+            self.saver.restore(session, model)
+            print('Testing...')
+
+            save_name = model_name[:-len(self.MODEL_EXT)] + self.TEST_OUT_SUFFIX
+            with open(save_name, 'w') as f:
+                ignored_sen = 0
+                for line in lines:
+                    question = line[:-1]
+
+                    answer = self.predict_single(question)
+                    if not answer:
+                        ignored_sen += 1
+                        continue
+
+                    prediction = '{x[0]}{0}\n{x[1]}{1}\n\n'.format(question, self.text_data.sequence2str(answer, clean=True), x=self.SENTENCES_PREFIX)
+                    f.write(prediction)
+                print('Prediction finished, {}/{} sentences ignored (too long)'.format(ignored_sen, len(lines)))
+
+    def _get_model_list(self):
+        model_list = [os.path.join(self.model_dir, f) for f in os.listdir(self.model_dir) if f.endswith(self.MODEL_EXT)]
+        return sorted(model_list)
+
     # Implementation done, Testing remains
     def _model_name(self):
         model_name = os.path.join(self.model_dir, self.MODEL_NAME_BASE)
@@ -99,4 +133,17 @@ class Bot:
             model_name += '-' + str(self.global_step)
         return model_name + self.MODEL_EXT
 
+    def predict_single(self, question, questionSeq=None):
 
+        batch = self.text_data.sentence2enco(question)
+        if not batch:
+            return None
+        #if questionSeq is not None:  # If the caller want to have the real input
+        #    questionSeq.extend(batch.encoderSeqs)
+
+        # Run the model
+        ops, feedDict = self.model.step(batch)
+        output = self.session.run(ops[0], feedDict)  # TODO: Summarize the output too (histogram, ...)
+        answer = self.text_data.deco2sentence(output)
+
+        return answer

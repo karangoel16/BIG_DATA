@@ -235,7 +235,7 @@ class dataset:
             var_sent.reverse()
         return self.detokenize(var_sent);
     
-    def setence_id(self,var_sent):
+    def sentence_id(self,var_sent):
         if sentence == "":
             return None;#this is to check if the sentence which we have sent has some value in the string or not
         var_tokens=nltk.word_tokenize(sent);
@@ -245,7 +245,57 @@ class dataset:
         for t in var_tokens:
             word_id=self.word_id(t,False);#we do not want new element should be added to the dictionary as this might not be correct word too
         '''We need to create batch so that it can be sent to the model inside'''
+        var_batch=self.create_batch([[word_id,[]]])
+        return batch
         
+    def create_batch(self,var_samples):
+        var_batch=batch()
+        var_batch_size=len(var_samples)
+        for i in range(var_batch_size):
+            var_sample=var_samples[i]
+            #TODO Mode check:
+            var_sample = list(reversed(var_sample))
+            var_batch.var_encoder.append(list(reversed(var_sample[0])))
+            var_batch.var_decoder.append([self.var_token]+var_sample[1]+[self.var_token])
+            #print(len(var_batch.var_encoder[i]))
+            #print(len(var_batch.var_decoder[i]))
+            #print(self.var_max_length)
+            var_batch.var_target.append(var_batch.var_decoder[-1][1:])
+            assert len(var_batch.var_encoder[i])<=self.var_max_length
+            assert len(var_batch.var_decoder[i])<=self.var_max_length+2
+            var_batch.var_encoder[i] = [self.var_pad]*(self.var_max_length-len(var_batch.var_encoder[i]))+var_batch.var_encoder[i]
+            var_batch.var_decoder[i] = [self.var_pad]*(self.var_max_length-len(var_batch.var_decoder[i]))+var_batch.var_decoder[i]
+            var_batch.var_target[i]=var_batch.var_target[i] +[self.var_pad]*(self.var_max_length+2-len(var_batch.var_target[i]))
+            var_batch.var_weight.append([1.0]*len(var_batch.var_target[i]+[0.0]*(self.var_max_length+2-len(var_batch.var_target[i]))))
+            ##need to write more code here
+        var_encoders=[];
+        #print(var_batch.var_encoder)
+        for i in range(self.var_max_length):
+            var_encoder=[]
+            for j in range(var_batch_size):
+                #print(var_batch.var_encoder[j][i])
+                var_encoder.append(var_batch.var_encoder[j][i])
+            var_encoders.append(var_encoder)
+        var_batch.var_encoder=var_encoders
+        var_decoders=[]
+        var_targets=[]
+        var_weights=[]
+        for i in range(self.var_max_length):
+            var_decoder=[]
+            var_target=[]
+            var_weight=[]
+            for j in range(var_batch_size):
+                #print(var_batch.var_encoder[j][i])
+                var_decoder.append(var_batch.var_decoder[j][i])
+                var_target.append(var_batch.var_target[j][i])
+                var_weight.append(var_batch.var_weight[j][i])
+            var_decoders.append(var_decoder)
+            var_targets.append(var_target)
+            var_weights.append(var_weight)
+        var_batch.var_decoder=var_decoders
+        var_batch.var_weight=var_weights
+        var_batch.var_target=var_targets
+        return var_batch    
     def getBatches(self):
         """Prepare the batches for the current epoch
         Return:
@@ -262,8 +312,8 @@ class dataset:
                 yield self.var_sam_train[i:min(i + self.batch_size,  len(self.var_sam_train))]
 
         for samples in genNextSamples():
-            batch = self._createBatch(samples)#this function is yet to be implemented
-            batches.append(batch)
+            var_batch = self.create_batch(samples)#this function is yet to be implemented
+            batches.append(var_batch)
         return batches
    
     def detokenize(self, tokens):
@@ -272,7 +322,12 @@ class dataset:
                        t not in string.punctuation
                     else t
             for t in tokens]).strip().capitalize()
-        
+    
+    def batch_seq_str(self,var_batch,seq_id=0):
+        var_seq=[]
+        for i in range(len(var_batch)):
+            var_seq.append(var_batch[i][seq_id])
+        return self.seq_sent(var_seq);
         
 if __name__ == "__main__":        
     t=dataset('/home/karan/Downloads/GIT_HUB/BIG_DATA');#we have to enter the path Name    

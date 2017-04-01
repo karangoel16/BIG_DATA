@@ -176,6 +176,8 @@ class dataset:
                   '<go>':self.var_token
                  };
             pickle.dump(data,f,-1);
+        #except:
+        #    print("Error in save dataset");
 
     def load_dataset(self):
         with open(os.path.join(self.DirName,self.var_corpus_dict),"rb") as f:

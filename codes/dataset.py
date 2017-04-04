@@ -4,7 +4,6 @@ import pickle
 import pandas as pd
 import csv
 import random
-import configparser as cp
 from cornell import cornell_data
 from scotus import scotus
 from ubuntu import ubuntu
@@ -36,30 +35,37 @@ class dataset:
             print('INCORRECT PATH ENTERED FOR THE CORPUS');
             return ;
         self.DirName=DirName;
-        Config = cp.ConfigParser();
-        Config.read(DirName+"/Database/Config.ini");
-        self.choice=int(Config.get('Dataset','choice'));
+        #try:
+            #corpus_data=read.table((DirName+"/Database/CorpusData.csv"));
+        print("Enter the number of the database you want to read?");
+        print("1. Ubuntu");
+        print("2. Scotus");
+        print("3. Cornel");
+        choice=int(input());
+        dict_temp={};
+        '''
+            This is place where we add the different corpus
+        '''
+        with open((DirName+"/Database/CorpusData.csv")) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if reader.line_num==(choice+1):
+                    dict_temp=row;
+                    break;
+        self.var_corpus_name=dict_temp['CorpusName'];
+        self.var_corpus_dict=dict_temp['Dictionary_Add'];
+        self.var_corpus_loc=dict_temp['Corpus Unique Path'];
+        '''We have to take maximum length from the user as the arguments in the final draft of the program'''
+        self.var_max_length=10;
+        self.var_word_id={};#this is to compute the number to word
+        self.var_id_word={};#this is to compute the word to number
         self.var_pad=-1;
         self.var_eos=-1;
         self.var_unique=-1;
         self.var_unknown=-1;
         self.var_token=-1;
         self.var_sam_train=[];
-        self.var_word_id={};#this is to compute the number to word
-        self.var_id_word={};#this is to compute the word to number
-        self.var_max_length=int(Config.get('Dataset','maxLength'));
-        dict_temp={};
-        self.var_dict=self.DirName+"/Database/file_dict.p"#this is the value where we will sa
         self.load_data(); 
-
-        '''
-            This is place where we add the different corpus
-        '''
-        
-        
-        '''We have to take maximum length from the user as the arguments in the final draft of the program'''
-
-
         #except:
         #    print("Not able to connect to the database (check github)");
         #    return;
@@ -79,7 +85,7 @@ class dataset:
             var_user_1_word=self.token_(var_user_1["text"]);
             
             var_user_2_word=self.token_(var_user_2["text"],True);
-            print(var_user_1_word);
+
             if var_user_1_word and var_user_2_word:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
                 self.var_sam_train.append([var_user_1_word,var_user_2_word]);
@@ -168,11 +174,9 @@ class dataset:
         return word_len;#this is to add the word back into the dictionary
 
     def save_dataset(self):
-        path=self.var_dict;
-        #try:
+        path=self.DirName+self.var_corpus_dict;
         with open(path,'wb') as f:
-            data={
-                  'word_id':self.var_word_id,
+            data={'word_id':self.var_word_id,
                   'id_word':self.var_id_word,
                   'sample':self.var_sam_train,
                   '<pad>':self.var_pad,
@@ -185,19 +189,15 @@ class dataset:
         #    print("Error in save dataset");
 
     def load_dataset(self):
-        path=self.var_dict;
-        try:
-            with open(path,"rb") as f:
-                data=pickle.load(f);
-                self.var_word_id=data['word_id'];
-                self.var_id_word=data['id_word'];
-                self.var_sam_train=data['sample']
-                self.var_pad=data['<pad>'];
-                self.var_token=data['<go>'];
-                self.var_eos=data['<eos>'];
-                self.var_unknown=data['<unknown>'];
-        except:
-            print("Error in load dataset");
+        with open(os.path.join(self.DirName,self.var_corpus_dict),"rb") as f:
+            data=pickle.load(f);
+            self.var_word_id=data['word_id'];
+            self.var_id_word=data['id_word'];
+            self.var_sam_train=data['sample']
+            self.var_pad=data['<pad>'];
+            self.var_token=data['<go>'];
+            self.var_eos=data['<eos>'];
+            self.var_unknown=data['<unknown>'];
     
     def next_batch(self):
         random.shuffle(self.var_sam_train);

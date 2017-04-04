@@ -1,7 +1,8 @@
 /GARBAGE/*
 /Corpus/*
-/Database/config.ini
-/Database/
+/Database/*
 *.ipynb
 *.csv
+/.project
+/.pydevproject
 

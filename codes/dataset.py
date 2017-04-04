@@ -23,7 +23,7 @@ class dataset:
     '''
         We need the DirName that is the dir where our code is present so that we can run the set on it
     '''
-    def __init__(self,DirName):
+    def __init__(self):
         '''
             args
                 1.Dataset to be loaded
@@ -41,12 +41,13 @@ class dataset:
                 8.Sample Training
             
         '''
-        if not os.path.exists(DirName):
+        self.DirName='/'.join(os.getcwd().split('/')[:-1]);
+        if not os.path.exists(self.DirName):
             print('INCORRECT PATH ENTERED FOR THE CORPUS');
             return ;
-        self.DirName=DirName;
         Config = cp.ConfigParser();
-        Config.read(DirName+"/Database/Config.ini");
+        print(self.DirName);
+        Config.read(self.DirName+"/Database/Config.ini");
         self.choice=int(Config.get('Dataset','choice'));
         self.batch_size=int(Config.get('Dataset','batch_size'));
         self.var_pad=-1;
@@ -295,7 +296,8 @@ class dataset:
         var_batch.var_decoder=var_decoders
         var_batch.var_weight=var_weights
         var_batch.var_target=var_targets
-        return var_batch    
+        return var_batch   
+    
     def getBatches(self):
         """Prepare the batches for the current epoch
         Return:
@@ -328,7 +330,12 @@ class dataset:
         for i in range(len(var_batch)):
             var_seq.append(var_batch[i][seq_id])
         return self.seq_sent(var_seq);
-        
+    
+    def id_sent(self,decoder_output):
+        var_sequence=[]
+        for out in decoder_output:
+            sequence.append(np.argmax(out))
+        return sequence;
 if __name__ == "__main__":        
-    t=dataset('/home/karan/Downloads/GIT_HUB/BIG_DATA');#we have to enter the path Name    
+    t=dataset();#we have to enter the path Name    
     print(t.getBatches())

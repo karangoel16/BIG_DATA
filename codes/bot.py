@@ -57,7 +57,7 @@ class Bot:
         self.text_data = dataset.dataset()
 
         with tf.device(self.get_device()):
-            self.model = RNNModel(self.args, self.textData)
+            self.model = RNNModel(self.text_data)
 
         self.writer = tf.summary.FileWriter(self._get_summary_name())
         self.saver = tf.train.Saver(max_to_keep=200, write_version=tf.train.SaverDef.V1)

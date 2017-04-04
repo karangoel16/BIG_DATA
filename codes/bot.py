@@ -48,7 +48,35 @@ class Bot:
 
     def main(self, **kwargs):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
+        print("SmartGator Intelligent chatbot")
 
+        self.root_dir = os.getcwd()
+
+        self.load_model_params()
+
+        self.text_data = dataset.dataset()
+
+        with tf.device(self.get_device()):
+            self.model = RNNModel(self.args, self.textData)
+
+        self.writer = tf.summary.FileWriter(self._get_summary_name())
+        self.saver = tf.train.Saver(max_to_keep=200, write_version=tf.train.SaverDef.V1)
+
+        self.session = tf.Session(config=tf.ConfigProto(
+            allow_soft_placement=True,
+            log_device_placement=False)
+        )
+
+        self.session.run(tf.global_variables_initializer())
+
+        if self.test:
+            self.interactive_main();
+        else:
+            self.train_model(self.session)
+
+        self.session.close()
+        print("Say Bye Bye to SmartGator! ;)")
+    
     def _save_session(self, session):
         self.saver.save(session, self._model_name())
 

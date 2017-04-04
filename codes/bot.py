@@ -180,7 +180,7 @@ class Bot:
         model_name = self._get_model_name()
 
         if os.listdir(self.model_dir):
-            if self.args.reset:
+            if self.reset:
                 print('Reseting by destroyinh previous model at {}'.format(model_name))
 
             elif os.path.exists(model_name):
@@ -189,13 +189,13 @@ class Bot:
 
             elif self._get_model_list():
                 print('Conflicting previous models found.')
-                raise RuntimeError('Check previous models in \'{}\'or try with Keep_all flag)'.format(self.model_dir))
+                raise RuntimeError('Check previous models in \'{}\'or try with keep_all flag)'.format(self.model_dir))
 
             else:
                 print('No previous model found. Cleaning for sanity .. at{}'.format(self.model_dir))
-                self.args.reset = True
+                self.reset = True
 
-            if self.args.reset:
+            if self.reset:
                 file_list = [os.path.join(self.model_dir,f) for f in os.listdir(self.model_dir)]
                 for f in file_list:
                     print('Removing {}'.format(f))
@@ -215,6 +215,46 @@ class Bot:
 
     def load_model_params(self):
         #TO DO 494-556#
+        self.model_dir = os.path.join(self.root_dir,self.MODEL_DIR_BASE)
+        if self.model_tag:
+            self.model_dir += '-'+self.model_dir
+
+        config_name = os.path.join(self.model_dir,self.CONFIG_FILENAME)
+        if not self.reset and not self.create_dataset and os.path.exists(config_name):
+            config = configparser.ConfigParser()
+            config.read(config_name)
+
+            current_version = config['General'].get('version')
+            if current_version != self.CONFIG_VERSION:
+                raise UserWarning('Current configuration version {0} different from {1}.Do manual changes on \'{2}\''.format(current_version,self.CONFIG_VERSION,config_name))
+
+            self.global_step = config['General'].getint('global_step')
+            self.max_length = config['General'].getint('max_length')
+            self.watson_mode = config['General'].getboolean('watson_mode')
+            self.auto_encode = config['General'].getboolean('auto_encode')
+            self.corpus = config['General'].get('corpus')
+            self.dataset_tag = config['General'].get('dataset_tag', '')
+            self.hidden_size = config['Network'].getint('hidden_size')
+            self.num_layers = config['Network'].getint('num_layers')
+            self.embedding_size = config['Network'].getint('embedding_size')
+            self.init_embeddings = config['Network'].getboolean('init_embeddings')
+            self.softmax_samples = config['Network'].getint('softmax_samples')
+
+            # Print the restored params
+            print()
+            print('Warning: Restoring parameters:')
+            print('globStep: {}'.format(self.glob_step))
+            print('maxLength: {}'.format(self.max_length))
+            print('watsonMode: {}'.format(self.watson_mode))
+            print('autoEncode: {}'.format(self.auto_encode))
+            print('corpus: {}'.format(self.corpus))
+            print('datasetTag: {}'.format(self.dataset_tag))
+            print('hiddenSize: {}'.format(self.hidden_size))
+            print('numLayers: {}'.format(self.num_layers))
+            print('embeddingSize: {}'.format(self.embedding_size))
+            print('initEmbeddings: {}'.format(self.init_embeddings))
+            print('softmaxSamples: {}'.format(self.softmax_samples))
+            print()
 
     def save_model_params(self):
         #TO DO 560-586#
@@ -224,20 +264,20 @@ class Bot:
 
     def _get_model_name(self):
         model_name = os.path.join(self.model_dir,self.MODEL_NAME_BASE)
-        if self.args.keep_all:
+        if self.keep_all:
             mdoel_name += '-' + str(self.global_step)
 
         return model_name + self.MODEL_EXT
 
     def get_device(self):
-        if self.args.get_device == 'cpu':
+        if self.get_device == 'cpu':
             return '/cpu:0'
-        elif self.args.get_device == 'gpu':
+        elif self.get_device == 'gpu':
             return '/gpu:0'
-        elif self.args.get_device is None:
+        elif self.get_device is None:
             return None
         else:
-            print('Warning: Error detected in devoce name: {}, switch to default devicde'.format(self.args.get_device))
+            print('Warning: Error detected in devoce name: {}, switch to default devicde'.format(self.get_device))
             return None
 
 

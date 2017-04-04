@@ -160,6 +160,7 @@ class Bot:
         print("Done.")
 
     def load_embedding(self,session):
+        # TODO :- see if we need this load embedding model as of now
         with tf.variable_scope("embedding_rnn_seq2seq/RNN/EmbeddingWrapper",reuse=True):
             embedding_in = tf.get_variable("embedding")
         with tf.variable_scope("embedding_rnn_seq2seq/embedding_rnn_decoder",reuse=True):
@@ -217,7 +218,33 @@ class Bot:
         #TO DO 494-556#
 
     def save_model_params(self):
-        #TO DO 560-586#
+        config = configparser.ConfigParser()
+        general = {
+            "version": self.CONFIG_VERSION,
+            "global_step": self.global_step,
+            "max_length": self.max_length,
+            "watson_mode": self.watson_mode,
+            "auto_encode":  self.auto_encode,
+            "corpus": self.corpus,
+            "dataset_tag": self.dataset_tag  
+        }
+        config["General"] = general
+        network = {
+            "hidden_size": self.hidden_size,
+            "num_layers": self.num_layers,
+            "embedding_size": self.embedding_size,
+            "init_embeddings": self.init_embeddings,
+            "softmax_samples": self.softmax_samples
+        }
+        config["Network"] = network
+        # Keep track of the learning params (but without restoring them)
+        config['Training (won\'t be restored)'] = {}
+        config['Training (won\'t be restored)']['learning_rate'] = str(self.learning_rate)
+        config['Training (won\'t be restored)']['batch_size'] = str(self.batch_size)
+
+        with open(os.path.join(self.modelDir, self.CONFIG_FILENAME), 'w') as configFile:
+            config.write(configFile)
+
 
     def _get_summary_name(self):
         return self.model_dir

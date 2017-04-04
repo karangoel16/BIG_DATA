@@ -147,3 +147,16 @@ class Bot:
         answer = self.text_data.deco2sentence(output)
 
         return answer
+
+    def predict_daemon(self,sentence):
+        return self.text_data.sequence2str(
+            self.predict_single(sentence),
+            clean = True
+            )
+
+    def close_daemon(self):
+        print("Daemon Existing .. ")
+        self.session.close()
+        print("Done.")
+
+    

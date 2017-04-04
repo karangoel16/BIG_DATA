@@ -213,7 +213,32 @@ class Bot:
     def _get_model_list(self):
         return [os.path.join(self.model_dir,f) for f in os.listdir(self.model_dir) if f.endswith(self.MODEL_EXT)]
 
-    
+    def load_model_params(self):
+        #TO DO 494-556#
+
+    def save_model_params(self):
+        #TO DO 560-586#
+
+    def _get_summary_name(self):
+        return self.model_dir
+
+    def _get_model_name(self):
+        model_name = os.path.join(self.model_dir,self.MODEL_NAME_BASE)
+        if self.args.keep_all:
+            mdoel_name += '-' + str(self.global_step)
+
+        return model_name + self.MODEL_EXT
+
+    def get_device(self):
+        if self.args.get_device == 'cpu':
+            return '/cpu:0'
+        elif self.args.get_device == 'gpu':
+            return '/gpu:0'
+        elif self.args.get_device is None:
+            return None
+        else:
+            print('Warning: Error detected in devoce name: {}, switch to default devicde'.format(self.args.get_device))
+            return None
 
 
     

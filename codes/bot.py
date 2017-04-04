@@ -126,7 +126,30 @@ class Bot:
         model_list = [os.path.join(self.model_dir, f) for f in os.listdir(self.model_dir) if f.endswith(self.MODEL_EXT)]
         return sorted(model_list)
 
-    def predict_single(self, question, questionSeq=None):
+    def interactive_main(self,session):
+        print('Initiating interactive mode .. ')
+        print('Enter your query or press ENTER to quit!')
+
+        while True:
+            question = input(self.SENTENCES_PREFIX[0])
+            if question == '' or question == 'exit':
+                break
+
+            question_seq = []
+            answer = self.predict_single(question, question_seq)
+            if not answer:
+                print('Out of my scope .. ask something simpler!')
+                continue
+
+            print('{}{}'.format(self.SENTENCES_PREFIX[1],self.text_data.sequence2str(answer,clean=True)))
+
+            if self.verbose:
+                print(self.text_data.batch_seq2str(question_seq,clean=True,reverse=True))
+                print(self.text_data.sequence2str(answer))
+
+            print()
+
+    def predict_single(self, question, question_seq=None):
 
         batch = self.text_data.sentence2enco(question)
         if not batch:

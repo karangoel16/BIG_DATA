@@ -1,6 +1,5 @@
 /GARBAGE/*
 /Corpus/*
-/Database/config.ini
 *.p
 *.ipynb
 *.csv

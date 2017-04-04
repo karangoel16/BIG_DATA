@@ -93,7 +93,7 @@ class Bot:
 
         self._save_session(session)
 
-    def prediction_set(self, session):
+    def predict_test_set(self, session):
         with open(os.path.join(self.root_dir, self.TEST_IN_NAME), 'r') as f:
             lines = f.readlines()
 
@@ -125,13 +125,6 @@ class Bot:
     def _get_model_list(self):
         model_list = [os.path.join(self.model_dir, f) for f in os.listdir(self.model_dir) if f.endswith(self.MODEL_EXT)]
         return sorted(model_list)
-
-    # Implementation done, Testing remains
-    def _model_name(self):
-        model_name = os.path.join(self.model_dir, self.MODEL_NAME_BASE)
-        if self.keep_all:
-            model_name += '-' + str(self.global_step)
-        return model_name + self.MODEL_EXT
 
     def predict_single(self, question, questionSeq=None):
 
@@ -211,9 +204,6 @@ class Bot:
         self.saver.save(session,self._get_model_name())
         tqdm.write('Model saved.')
 
-    def _get_model_list(self):
-        return [os.path.join(self.model_dir,f) for f in os.listdir(self.model_dir) if f.endswith(self.MODEL_EXT)]
-
     def load_model_params(self):
         #TO DO 494-556#
         self.model_dir = os.path.join(self.root_dir,self.MODEL_DIR_BASE)
@@ -284,7 +274,6 @@ class Bot:
 
         with open(os.path.join(self.modelDir, self.CONFIG_FILENAME), 'w') as configFile:
             config.write(configFile)
-
 
     def _get_summary_name(self):
         return self.model_dir

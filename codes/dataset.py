@@ -85,7 +85,6 @@ class dataset:
             var_user_1_word=self.token_(var_user_1["text"]);
             
             var_user_2_word=self.token_(var_user_2["text"],True);
-
             if var_user_1_word and var_user_2_word:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
                 self.var_sam_train.append([var_user_1_word,var_user_2_word]);
@@ -125,18 +124,9 @@ class dataset:
     
     def load_data(self):
         exist_dataset=False;#if the data file does not exist
-        if os.path.exists(self.var_dict):
+        if os.path.exists(self.var_corpus_dict):
             exist_dataset=True;
         if not exist_dataset:
-            with open((self.DirName+"/Database/CorpusData.csv")) as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    if reader.line_num==(self.choice+1) or self.choice==4:
-                        dict_temp=row;
-                        self.var_corpus_name=dict_temp['CorpusName'];
-                        self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
-                        self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
-                        break;
             path=self.var_corpus_loc;
             if self.var_corpus_name=='cornell':
                 t=cornell_data(path);
@@ -149,6 +139,7 @@ class dataset:
             self.create_corpus(t.getconversation());
             self.save_dataset();
         else:
+            #we need to load data set here
             self.load_dataset();#this is place where we will load the dataset
             
     def create_corpus(self,conversations):

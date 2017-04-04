@@ -147,3 +147,98 @@ class Bot:
         answer = self.text_data.deco2sentence(output)
 
         return answer
+
+    def predict_daemon(self,sentence):
+        return self.text_data.sequence2str(
+            self.predict_single(sentence),
+            clean = True
+            )
+
+    def close_daemon(self):
+        print("Daemon Existing .. ")
+        self.session.close()
+        print("Done.")
+
+    def load_embedding(self,session):
+        with tf.variable_scope("embedding_rnn_seq2seq/RNN/EmbeddingWrapper",reuse=True):
+            embedding_in = tf.get_variable("embedding")
+        with tf.variable_scope("embedding_rnn_seq2seq/embedding_rnn_decoder",reuse=True):
+            embedding_out = tf.get_variable("embedding")
+
+        variables = tf.get_collection_ref(tf.GraphKeys.TRAINABLE_VARIABLES)
+        variable.remove(embedding_in)
+        variables.remove(embedding_out)
+
+        # leave if restoring a model #
+        if self.globStep != 0:
+            return
+
+        # Define new model here #
+        # TO DO 406-434#
+
+    def manage_previous_mode(self,session):
+        model_name = self._get_model_name()
+
+        if os.listdir(self.model_dir):
+            if self.args.reset:
+                print('Reseting by destroyinh previous model at {}'.format(model_name))
+
+            elif os.path.exists(model_name):
+                print('Restoring previous model from {}'.format(model_name))
+                self.saver.restore(session,model_name)
+
+            elif self._get_model_list():
+                print('Conflicting previous models found.')
+                raise RuntimeError('Check previous models in \'{}\'or try with Keep_all flag)'.format(self.model_dir))
+
+            else:
+                print('No previous model found. Cleaning for sanity .. at{}'.format(self.model_dir))
+                self.args.reset = True
+
+            if self.args.reset:
+                file_list = [os.path.join(self.model_dir,f) for f in os.listdir(self.model_dir)]
+                for f in file_list:
+                    print('Removing {}'.format(f))
+                    os.remove(f)
+
+        else:
+            print('Nothing apriorily exists, starting fresh from direwctory: {}'.format(self.model_dir))
+
+    def _save_session(self.session):
+        tqdm.write('Chkpnt reached: saving model .. ')
+        self.save_model_params()
+        self.saver.save(session,self._get_model_name())
+        tqdm.write('Model saved.')
+
+    def _get_model_list(self):
+        return [os.path.join(self.model_dir,f) for f in os.listdir(self.model_dir) if f.endswith(self.MODEL_EXT)]
+
+    def load_model_params(self):
+        #TO DO 494-556#
+
+    def save_model_params(self):
+        #TO DO 560-586#
+
+    def _get_summary_name(self):
+        return self.model_dir
+
+    def _get_model_name(self):
+        model_name = os.path.join(self.model_dir,self.MODEL_NAME_BASE)
+        if self.args.keep_all:
+            mdoel_name += '-' + str(self.global_step)
+
+        return model_name + self.MODEL_EXT
+
+    def get_device(self):
+        if self.args.get_device == 'cpu':
+            return '/cpu:0'
+        elif self.args.get_device == 'gpu':
+            return '/gpu:0'
+        elif self.args.get_device is None:
+            return None
+        else:
+            print('Warning: Error detected in devoce name: {}, switch to default devicde'.format(self.args.get_device))
+            return None
+
+
+    

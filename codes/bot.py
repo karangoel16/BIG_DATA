@@ -45,6 +45,20 @@ class Bot:
         self.ecpochs = 30
         self.learning_rate = 1e-4
         self.save_ckpt_at = 1000
+        self.DirName='/'.join(os.getcwd().split('/')[:-1])
+        config = configparser.ConfigParser()
+        config.read(self.DirName+"/Database/Config.ini");
+        self.global_step = int(config.get('Bot', 'globalStep'))
+        self.max_length = int(config.get('Dataset', 'maxLength'))
+        self.watson_mode = bool(config.get('Bot', 'watsonMode'))
+        self.auto_encode = bool(config.get('Bot', 'autoEncode'))
+        self.corpus = "Cornel" #Todo:- Fix this hardcode
+        self.dataset_tag = ""
+        self.hidden_size = int(config.get('Model', 'hiddenSize'))
+        self.num_layers =  int(config.get('Model', 'numLayers'))
+        self.embedding_size = int(config.get('Model', 'embeddingSize'))
+        self.init_embeddings = False
+        self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
 
     def main(self, **kwargs):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)

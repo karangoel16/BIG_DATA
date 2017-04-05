@@ -5,8 +5,8 @@ import tensorflow as tf
 import numpy as np
 import math
 #Todo:- ask karan to have first character of class name as capital
-from codes.dataset import dataset
-from codes.model import RNNModel
+from dataset import dataset
+from model import RNNModel
 
 class Bot:
     "Bot framework which integrates all the component"
@@ -26,10 +26,10 @@ class Bot:
         self.global_step = 0
 
         self.session = None
-
+        self.model_tag = None
         # Filename and directories constants
         # Todo:- Move following to seperate config files
-        self.root_dir
+        self.root_dir = '/'.join(os.getcwd().split('/')[:-1])
         self.MODEL_DIR_BASE = 'save/model'
         self.MODEL_NAME_BASE = 'model'
         self.MODEL_EXT = '.ckpt'
@@ -38,6 +38,8 @@ class Bot:
         self.TEST_IN_NAME = 'data/test/samples.txt'
         self.TEST_OUT_SUFFIX = '_predictions.txt'
         self.SENTENCES_PREFIX = ['Q: ', 'A: ']
+        self.reset = None
+        self.create_dataset = None
 
     def load_config(self):
         #Todo:- Load all the required values from the required configs
@@ -59,6 +61,7 @@ class Bot:
         self.embedding_size = int(config.get('Model', 'embeddingSize'))
         self.init_embeddings = False
         self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
+        self.model_tag = None
 
     def main(self, **kwargs):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
@@ -68,7 +71,7 @@ class Bot:
 
         self.load_model_params()
 
-        self.text_data = dataset.dataset()
+        self.text_data = dataset()
         self.load_config()
 
         with tf.device(self.get_device()):
@@ -264,7 +267,7 @@ class Bot:
         else:
             print('Nothing apriorily exists, starting fresh from direwctory: {}'.format(self.model_dir))
 
-    def _save_session(self.session):
+    def _save_session(self,session):
         tqdm.write('Chkpnt reached: saving model .. ')
         self.save_model_params()
         self.saver.save(session,self._get_model_name())
@@ -363,4 +366,6 @@ class Bot:
             return None
 
 
-    
+if __name__=="__main__":
+	bot = Bot()
+	bot.main()    

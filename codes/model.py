@@ -1,6 +1,6 @@
 import tensorflow as tf
 import configparser as cp
-from chatbot.textdata import Batch
+from dataset import batch
 #list of arguments to be given in this for the module to works
 
 class initializer:

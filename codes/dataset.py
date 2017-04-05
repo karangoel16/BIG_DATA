@@ -1,7 +1,6 @@
 import os
 import nltk
 import pickle
-import pandas as pd
 import csv
 import random
 import configparser as cp
@@ -167,7 +166,7 @@ class dataset:
     def save_dataset(self):
         path=self.DirName+self.var_corpus_dict;
         with open(path,'wb') as f:
-            data={'word_id':self.var_word_id,l
+            data={'word_id':self.var_word_id,
                   'id_word':self.var_id_word,
                   'sample':self.var_sam_train,
                   '<pad>':self.var_pad,

@@ -124,6 +124,15 @@ class dataset:
         if os.path.exists(self.var_corpus_dict):
             exist_dataset=True;
         if not exist_dataset:
+            with open((self.DirName+"/Database/CorpusData.csv")) as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if reader.line_num==(self.choice+1) or self.choice==4:
+                        dict_temp=row;
+                        self.var_corpus_name=dict_temp['CorpusName'];
+                        self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
+                        self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
+                        break;	
             path=self.var_corpus_loc;
             if self.var_corpus_name=='cornell':
                 t=cornell_data(path);

@@ -59,7 +59,7 @@ class dataset:
         self.var_id_word={};#this is to compute the word to number
         self.var_max_length=int(Config.get('Dataset','maxLength'));
         dict_temp={};
-        self.var_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
+        self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
 #we will save all the values in the dictionary in one go and will save this file
         self.load_data(); 
         #except:
@@ -179,7 +179,7 @@ class dataset:
         #    print("Error in save dataset");
 
     def load_dataset(self):
-        path=self.var_dict;
+        path=self.var_corpus_dict;
         try:
             with open(path,"rb") as f:
                 data=pickle.load(f);

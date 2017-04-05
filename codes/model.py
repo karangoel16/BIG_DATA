@@ -135,6 +135,7 @@ class RNNModel:
         if not self.test:  # Training
             feed_dict = {self.encoder[i]: batch.var_encoder[i]
                          for i in range(self.maxLenEnco)}
+            print(len(batch.var_decoder))
             feed_dict.update({self.decoder[i]: batch.var_decoder[i]
                               for i in range(self.maxLenDeco)})
             feed_dict.update({self.decoder_targets[i]: batch.var_target[i]

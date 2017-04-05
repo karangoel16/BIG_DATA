@@ -276,7 +276,7 @@ class dataset:
         var_decoders=[]
         var_targets=[]
         var_weights=[]
-        for i in range(self.var_max_length):
+        for i in range(self.var_max_length+2):
             var_decoder=[]
             var_target=[]
             var_weight=[]

@@ -248,7 +248,10 @@ class dataset:
         '''We need to create batch so that it can be sent to the model inside'''
         var_batch=self.create_batch([[word_id,[]]])
         return batch
-        
+    def vocab_size(self):
+    	return len(self.var_word_id)
+    def sample_size(self):
+    	return len(self.var_sam_train)	    
     def create_batch(self,var_samples):
         var_batch=batch()
         var_batch_size=len(var_samples)

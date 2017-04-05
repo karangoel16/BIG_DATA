@@ -260,7 +260,7 @@ class dataset:
             assert len(var_batch.var_encoder[i])<=self.var_max_length
             assert len(var_batch.var_decoder[i])<=self.var_max_length+2
             var_batch.var_encoder[i] = [self.var_pad]*(self.var_max_length-len(var_batch.var_encoder[i]))+var_batch.var_encoder[i]
-            var_batch.var_decoder[i] = [self.var_pad]*(self.var_max_length-len(var_batch.var_decoder[i]))+var_batch.var_decoder[i]
+            var_batch.var_decoder[i] = [self.var_pad]*(self.var_max_length+2-len(var_batch.var_decoder[i]))+var_batch.var_decoder[i]
             var_batch.var_target[i]=var_batch.var_target[i] +[self.var_pad]*(self.var_max_length+2-len(var_batch.var_target[i]))
             var_batch.var_weight.append([1.0]*len(var_batch.var_target[i]+[0.0]*(self.var_max_length+2-len(var_batch.var_target[i]))))
             ##need to write more code here

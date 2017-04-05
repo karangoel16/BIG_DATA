@@ -48,6 +48,7 @@ class Bot:
         self.epochs = 30
         self.learning_rate = 1e-4
         self.save_ckpt_at = 1000
+        self.batch_size = 10
         self.DirName='/'.join(os.getcwd().split('/')[:-1])
         config = configparser.ConfigParser()
         config.read(self.DirName+"/Database/Config.ini");
@@ -81,15 +82,16 @@ class Bot:
             self.model = RNNModel(self.text_data)
 
         #print (self._get_summary_name())
+        init_op = tf.global_variables_initializer()
         self.writer = tf.summary.FileWriter(self._get_summary_name())
-        #self.saver = tf.train.Saver(max_to_keep=200)
+        self.saver = tf.train.Saver(max_to_keep=200)
 
         self.session = tf.Session(config=tf.ConfigProto(
             allow_soft_placement=True,
             log_device_placement=False)
         )
 
-        self.session.run(tf.global_variables_initializer())
+        self.session.run(init_op)
 
         if self.test:
             self.interactive_main();
@@ -130,9 +132,9 @@ class Bot:
                     self.writer.add_summary(summary, self.global_step)
                     self.global_step += 1
 
-                    if self.globStep % 100 == 0:
+                    if self.global_step % 100 == 0:
                         perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                        print("----- Step %d -- Loss %.2f -- Perplexity %.2f" % (self.globStep, loss, perplexity))
+                        print("----- Step %d -- Loss %.2f -- Perplexity %.2f" % (self.global_step, loss, perplexity))
 
                     #Save checkpoint
                     if self.global_step % self.save_ckpt_at == 0:
@@ -237,7 +239,7 @@ class Bot:
         variables.remove(embedding_out)
 
         # leave if restoring a model #
-        if self.globStep != 0:
+        if self.global_step != 0:
             return
 
         # Define new model here #
@@ -272,10 +274,10 @@ class Bot:
             print('Nothing apriorily exists, starting fresh from direwctory: {}'.format(self.model_dir))
 
     def _save_session(self,session):
-        tqdm.write('Chkpnt reached: saving model .. ')
+        print('Chkpnt reached: saving model .. ')
         self.save_model_params()
         self.saver.save(session,self._get_model_name())
-        tqdm.write('Model saved.')
+        print('Model saved.')
 
     def load_model_params(self):
         #TO DO 494-556#
@@ -307,7 +309,7 @@ class Bot:
             # Print the restored params
             print()
             print('Warning: Restoring parameters:')
-            print('globStep: {}'.format(self.glob_step))
+            print('global_step: {}'.format(self.global_step))
             print('maxLength: {}'.format(self.max_length))
             print('watsonMode: {}'.format(self.watson_mode))
             print('autoEncode: {}'.format(self.auto_encode))
@@ -345,7 +347,7 @@ class Bot:
         config['Training (won\'t be restored)']['learning_rate'] = str(self.learning_rate)
         config['Training (won\'t be restored)']['batch_size'] = str(self.batch_size)
 
-        with open(os.path.join(self.modelDir, self.CONFIG_FILENAME), 'w') as configFile:
+        with open(os.path.join(self.model_dir, self.CONFIG_FILENAME), 'w') as configFile:
             config.write(configFile)
 
     def _get_summary_name(self):

@@ -61,7 +61,8 @@ class dataset:
         dict_temp={};
         self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
 #we will save all the values in the dictionary in one go and will save this file
-        self.load_data(); 
+        self.load_data();
+        print('Conversation loaded.')
         #except:
         #    print("Not able to connect to the database (check github)");
         #    return;
@@ -84,7 +85,7 @@ class dataset:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
                 self.var_sam_train.append([var_user_1_word,var_user_2_word]);
                 #print(var_user_1_word)
-                print(self.seq_sent(var_user_1_word))
+                #print(self.seq_sent(var_user_1_word))
             
     def token_(self,line,var_target=False):
         
@@ -130,7 +131,7 @@ class dataset:
                     if reader.line_num==(self.choice+1) or self.choice==4:
                         dict_temp=row;
                         self.var_corpus_name=dict_temp['CorpusName'];
-                        self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
+                        #self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
                         self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
                         break;	
             path=self.var_corpus_loc;
@@ -173,7 +174,8 @@ class dataset:
         return word_len;#this is to add the word back into the dictionary
 
     def save_dataset(self):
-        path=self.DirName+self.var_corpus_dict;
+        path=self.var_corpus_dict;
+        print(path)
         with open(path,'wb') as f:
             data={'word_id':self.var_word_id,
                   'id_word':self.var_id_word,

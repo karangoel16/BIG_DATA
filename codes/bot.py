@@ -17,7 +17,7 @@ class Bot:
         # in original code
 
         self.text_data = None  # Dataset
-        self.rnn_model = None  # Sequence to sequence model
+        self.model = None  # Sequence to sequence model
 
         # Tensorflow utilities for convenience saving/logging
         self.writer = None
@@ -40,11 +40,12 @@ class Bot:
         self.SENTENCES_PREFIX = ['Q: ', 'A: ']
         self.reset = None
         self.create_dataset = None
+        self.device = 'gpu'
 
     def load_config(self):
         #Todo:- Load all the required values from the required configs
         self.keep_all = False
-        self.ecpochs = 30
+        self.epochs = 30
         self.learning_rate = 1e-4
         self.save_ckpt_at = 1000
         self.DirName='/'.join(os.getcwd().split('/')[:-1])
@@ -62,6 +63,7 @@ class Bot:
         self.init_embeddings = False
         self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
         self.model_tag = None
+        self.test = False
 
     def main(self, **kwargs):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
@@ -74,11 +76,13 @@ class Bot:
         self.text_data = dataset()
         self.load_config()
 
+        print(self.text_data)
         with tf.device(self.get_device()):
             self.model = RNNModel(self.text_data)
 
+        #print (self._get_summary_name())
         self.writer = tf.summary.FileWriter(self._get_summary_name())
-        self.saver = tf.train.Saver(max_to_keep=200, write_version=tf.train.SaverDef.V1)
+        #self.saver = tf.train.Saver(max_to_keep=200)
 
         self.session = tf.Session(config=tf.ConfigProto(
             allow_soft_placement=True,
@@ -104,7 +108,7 @@ class Bot:
 
         #Todo:- See if we can try making it possible to restore from previous run
         if self.global_step == 0:
-            self.writer.add_graph(session.add_graph)
+            self.writer.add_graph(session.graph)
 
         print('Training begining (press Ctrl+C to save and exit)...')
 
@@ -112,15 +116,15 @@ class Bot:
             for epoch in range(self.epochs):
                 print(
                       "\n----- Epoch {}/{} ; (lr={}) -----".format(
-                        e+1,
+                        epoch+1,
                         self.epochs,
                         self.learning_rate
                         )
                       )
-                batches = dataset.next_batch()
+                batches = self.text_data.getBatches()
 
                 for curr_batch in batches:
-                    ops, feed_dict = self.rnn_model.step()
+                    ops, feed_dict = self.model.step(curr_batch)
                     assert len(ops) == 2
                     _, loss, summary = session.run(ops + tuple([merged_summaries]), feed_dict)
                     self.writer.add_summary(summary, self.global_step)
@@ -355,14 +359,14 @@ class Bot:
         return model_name + self.MODEL_EXT
 
     def get_device(self):
-        if self.get_device == 'cpu':
+        if self.device == 'cpu':
             return '/cpu:0'
-        elif self.get_device == 'gpu':
+        elif self.device == 'gpu':
             return '/gpu:0'
-        elif self.get_device is None:
+        elif self.device is None:
             return None
         else:
-            print('Warning: Error detected in devoce name: {}, switch to default devicde'.format(self.get_device))
+            print('Warning: Error detected in device name: {}, switch to default device'.format(self.device))
             return None
 
 

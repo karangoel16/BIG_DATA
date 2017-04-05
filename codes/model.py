@@ -1,10 +1,11 @@
+import os
 import tensorflow as tf
 import configparser as cp
 from dataset import batch
 #list of arguments to be given in this for the module to works
 
 class initializer:
-    def _init_(self, shape, scope=None, dtype=None):
+    def __init__(self, shape, scope=None, dtype=None):
         #TODO:- check if the shape of the weight is one or not
         assert len(shape) == 2
         self.scope = scope
@@ -24,8 +25,12 @@ class initializer:
 #maxLenEnco
 
 class RNNModel:
-    def _init_(self, textdata):
-        self.textdata = textdata       #this will keep the text data object
+    def __init__(self,text_data):
+        config = cp.ConfigParser()
+        self.DirName='/'.join(os.getcwd().split('/')[:-1]);
+        config.read(self.DirName+"/Database/Config.ini");
+        self.test = None
+        self.textdata = text_data       #this will keep the text data object
         self.dtype = tf.float32
         self.encoder = None
         self.decoder = None
@@ -34,25 +39,21 @@ class RNNModel:
         self.loss_fct = None
         self.opt_op = None
         self.outputs = None
-        self.build_network()           #this is done to compute the graph
-        config = cp.ConfigParser()
-        self.DirName='/'.join(os.getcwd().split('/')[:-1]);
-        Config.read(self.DirName+"/Database/Config.ini");
         self.softmaxSamples = int(config.get('Model', 'softmaxSamples'))
         self.hiddenSize = int(config.get('Model', 'hiddenSize'))
         self.numLayers = int(config.get('Model', 'numLayers'))
         self.maxLenEnco = int(config.get('Dataset', 'maxLength'))
         self.maxLenDeco = self.maxLenEnco + 2 #Todo: will see if it needs to be in config
-        self.test = None
         self.embeddingSize = int(config.get('Model', 'embeddingSize'))
         self.learningRate = float(config.get('Model', 'learningRate'))
+        self.build_network()           #this is done to compute the graph
 
     def build_network(self):
         outputProjection = None
         # Sampled softmax only makes sense if we sample less than vocabulary size.
-        if 0 < self.softmaxSamples < self.textData.vocab_size():
+        if 0 < self.softmaxSamples < self.textdata.vocab_size():
             outputProjection = ProjectionOp(
-                (self.hiddenSize, self.textData.vocab_size()),
+                (self.hiddenSize, self.textdata.vocab_size()),
                 scope='softmax_projection',
                 dtype=self.dtype
             )
@@ -73,7 +74,7 @@ class RNNModel:
                         local_inputs,
                         labels,
                         self.softmaxSamples,
-                        self.textData.vocab_size()),
+                        self.textdata.vocab_size()),
                     self.dtype)
 
         enc_dec_cell = tf.contrib.rnn.BasicLSTMCell(self.hiddenSize,
@@ -91,14 +92,14 @@ class RNNModel:
             #TODO:- check if operation name is not necessary for placeholders
             self.decoder  = [tf.placeholder(tf.int32, [None, ]) for _ in range(self.maxLenDeco)]
             self.decoder_weights=[tf.placeholder(tf.float32,[None,]) for _ in range(self.maxLenDeco)];
-            self.decoder_target  = [tf.placeholder(tf.int32, [None, ]) for _ in range(self.maxLenDeco)]
+            self.decoder_targets  = [tf.placeholder(tf.int32, [None, ]) for _ in range(self.maxLenDeco)]
 
         decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
             self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
             self.decoder,  # For training, we force the correct output (feed_previous=False)
             enc_dec_cell,
-            self.textData.vocab_size(),
-            self.textData.vocab_size(),  # Both encoder and decoder have the same number of class
+            self.textdata.vocab_size(),
+            self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
             embedding_size=self.embeddingSize,  # Dimension of each word
             output_projection=outputProjection.getWeights() if outputProjection else None,
             feed_previous=bool(self.test)
@@ -113,7 +114,7 @@ class RNNModel:
                 decoder_outputs,
                 self.decoder_targets,
                 self.decoder_weights,
-                self.textData.vocab_size(),
+                self.textdata.vocab_size(),
                 softmax_loss_function= sampledSoftmax if outputProjection else None
             )
             tf.summary.scalar('loss', self.loss_fct)
@@ -126,24 +127,25 @@ class RNNModel:
             )
             self.opt_op = opt.minimize(self.loss_fct);
 
-    def step(self):
+    def step(self, batch):
         feed_dict = {}
         ops = None
         #TODO:- Remove args dependecy if possible
+        print(self.test)
         if not self.test:  # Training
-            feed_dict = {self.encoder[i]: batch.encoderSeqs[i]
-                         for i in range(self.maxLengthEnco)}
-            feed_dict.update({self.decoder[i]: batch.decoderSeqs[i]
-                              for i in range(self.maxLengthDeco)})
-            feed_dict.update({self.decoder_targets[i]: batch.targetSeqs[i]
-                              for i in range(self.maxLengthDeco)})
-            feed_dict.update({self.decoder_weights[i]: batch.weights[i]
-                              for i in range(self.maxLengthDeco)})
+            feed_dict = {self.encoder[i]: batch.var_encoder[i]
+                         for i in range(self.maxLenEnco)}
+            feed_dict.update({self.decoder[i]: batch.var_decoder[i]
+                              for i in range(self.maxLenDeco)})
+            feed_dict.update({self.decoder_targets[i]: batch.var_target[i]
+                              for i in range(self.maxLenDeco)})
+            feed_dict.update({self.decoder_weights[i]: batch.var_weight[i]
+                              for i in range(self.maxLenDeco)})
             ops = (self.opt_op, self.loss_fct)
         else:  # Testing (batchSize == 1)
-            feed_dict = {self.encoder[i]: batch.encoderSeqs[i]
-                         for i in range(self.maxLengthEnco)}
-            feed_dict[self.decoder[0]]  = [self.textData.var_token]
+            feed_dict = {self.encoder[i]: batch.var_encoder[i]
+                         for i in range(self.maxLenEnco)}
+            feed_dict[self.decoder[0]]  = [self.textdata.var_token]
             ops = tuple([self.outputs])
         # Return one pass operator
         return ops, feed_dict

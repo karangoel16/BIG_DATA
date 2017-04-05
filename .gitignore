@@ -3,4 +3,6 @@
 *.p
 *.ipynb
 *.csv
+/.project
+/.pydevproject
 

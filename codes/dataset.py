@@ -70,8 +70,6 @@ class dataset:
         
         
         '''We have to take maximum length from the user as the arguments in the final draft of the program'''
-
-
         #except:
         #    print("Not able to connect to the database (check github)");
         #    return;
@@ -90,6 +88,7 @@ class dataset:
             var_user_1_word=self.token_(var_user_1["text"]);
             
             var_user_2_word=self.token_(var_user_2["text"],True);
+
             if var_user_1_word and var_user_2_word:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
                 self.var_sam_train.append([var_user_1_word,var_user_2_word]);

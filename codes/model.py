@@ -50,9 +50,9 @@ class RNNModel:
     def build_network(self):
         outputProjection = None
         # Sampled softmax only makes sense if we sample less than vocabulary size.
-        if 0 < self.softmaxSamples < self.textData.getVocabularySize():
+        if 0 < self.softmaxSamples < self.textData.vocab_size():
             outputProjection = ProjectionOp(
-                (self.hiddenSize, self.textData.getVocabularySize()),
+                (self.hiddenSize, self.textData.vocab_size()),
                 scope='softmax_projection',
                 dtype=self.dtype
             )
@@ -73,7 +73,7 @@ class RNNModel:
                         local_inputs,
                         labels,
                         self.softmaxSamples,
-                        self.textData.getVocabularySize()),
+                        self.textData.vocab_size()),
                     self.dtype)
 
         enc_dec_cell = tf.contrib.rnn.BasicLSTMCell(self.hiddenSize,
@@ -97,8 +97,8 @@ class RNNModel:
             self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
             self.decoder,  # For training, we force the correct output (feed_previous=False)
             enc_dec_cell,
-            self.textData.getVocabularySize(),
-            self.textData.getVocabularySize(),  # Both encoder and decoder have the same number of class
+            self.textData.vocab_size(),
+            self.textData.vocab_size(),  # Both encoder and decoder have the same number of class
             embedding_size=self.embeddingSize,  # Dimension of each word
             output_projection=outputProjection.getWeights() if outputProjection else None,
             feed_previous=bool(self.test)
@@ -113,7 +113,7 @@ class RNNModel:
                 decoder_outputs,
                 self.decoder_targets,
                 self.decoder_weights,
-                self.textData.getVocabularySize(),
+                self.textData.vocab_size(),
                 softmax_loss_function= sampledSoftmax if outputProjection else None
             )
             tf.summary.scalar('loss', self.loss_fct)
@@ -143,7 +143,7 @@ class RNNModel:
         else:  # Testing (batchSize == 1)
             feed_dict = {self.encoder[i]: batch.encoderSeqs[i]
                          for i in range(self.maxLengthEnco)}
-            feed_dict[self.decoder[0]]  = [self.textData.goToken]
+            feed_dict[self.decoder[0]]  = [self.textData.var_token]
             ops = tuple([self.outputs])
         # Return one pass operator
         return ops, feed_dict

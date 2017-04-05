@@ -69,6 +69,7 @@ class Bot:
         self.load_model_params()
 
         self.text_data = dataset.dataset()
+        self.load_config()
 
         with tf.device(self.get_device()):
             self.model = RNNModel(self.text_data)

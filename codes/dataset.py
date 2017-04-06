@@ -62,9 +62,9 @@ class dataset:
         self.var_max_length=int(Config.get('Dataset','maxLength'));
         self.maxLenEnco=self.var_max_length;
         self.maxLenDeco=self.maxLenEnco+2;
-        self.test=bool(Config.get('General','test'));
-        self.watson=bool(Config.get('Bot','watsonMode'));
-        self.autoencode=bool(Config.get('Bot','autoEncode'));
+        self.test=Config['General'].getboolean('test')
+        self.watson=Config['Bot'].getboolean('watsonMode')
+        self.autoencode=Config['Bot'].getboolean('autoEncode')
         dict_temp={};
         self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
 #we will save all the values in the dictionary in one go and will save this file
@@ -344,4 +344,4 @@ class dataset:
         return sequence;
 if __name__ == "__main__":        
     t=dataset();#we have to enter the path Name    
-    print(t.getBatches())
+    #print(t.getBatches())

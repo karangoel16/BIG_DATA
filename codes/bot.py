@@ -55,17 +55,17 @@ class Bot:
         self.batch_size = int(config.get('General', 'batchSize'))
         self.global_step = int(config.get('General', 'globalStep'))
         self.max_length = int(config.get('Dataset', 'maxLength'))
-        self.watson_mode = bool(config.get('Bot', 'watsonMode'))
-        self.auto_encode = bool(config.get('Bot', 'autoEncode'))
+        self.watson_mode = config['General'].getboolean('watsonMode')
+        self.auto_encode = config['General'].getboolean('autoEncode')
         self.corpus = config.get('Bot', 'corpus') #Todo:- Fix this hardcode
         self.dataset_tag = ""
         self.hidden_size = int(config.get('Model', 'hiddenSize'))
         self.num_layers =  int(config.get('Model', 'numLayers'))
         self.embedding_size = int(config.get('Model', 'embeddingSize'))
-        self.init_embeddings = bool(config.get('Bot', 'initEmbeddings'))
+        self.init_embeddings = config['Bot'].getboolean('initEmbeddings')
         self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
         self.model_tag = None
-        self.test = bool(config.get('General', 'test'))
+        self.test = config['General'].getboolean('test')
 
     def main(self, **kwargs):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
@@ -93,9 +93,9 @@ class Bot:
         )
 
         self.session.run(init_op)
-        print(self.test)
+        #print(self.test)
         if self.test:
-            self.interactive_main();
+            self.interactive_main(self.session);
         else:
             self.train_model(self.session)
 

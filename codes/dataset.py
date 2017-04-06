@@ -40,13 +40,15 @@ class dataset:
                 8.Sample Training
             
         '''
-        self.DirName='/'.join(os.getcwd().split('/')[:-1]);
+        self.DirName='/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1]);
+        #print(self.DirName)
         if not os.path.exists(self.DirName):
             print('INCORRECT PATH ENTERED FOR THE CORPUS');
             return ;
         Config = cp.ConfigParser();
-        print(self.DirName);
-        Config.read(self.DirName+"/Database/Config.ini");
+        config_file = self.DirName + "/Database/Config.ini"
+        #print(config_file);
+        Config.read(config_file);
         self.choice=int(Config.get('Dataset','choice'));
         self.batch_size=int(Config.get('Dataset','batch_size'));
         self.var_pad=-1;

@@ -8,6 +8,10 @@ import math
 from dataset import dataset
 from model import RNNModel
 
+self.DirName='/'.join(os.getcwd().split('/')[:-1])
+config = configparser.ConfigParser()
+config.read(self.DirName+"/Database/Config.ini");
+
 class Bot:
     "Bot framework which integrates all the component"
 
@@ -30,41 +34,38 @@ class Bot:
         # Filename and directories constants
         # Todo:- Move following to seperate config files
         self.root_dir = '/'.join(os.getcwd().split('/')[:-1])
-        self.MODEL_DIR_BASE = 'save/model'
-        self.MODEL_NAME_BASE = 'model'
-        self.MODEL_EXT = '.ckpt'
-        self.CONFIG_FILENAME = 'params.ini'
-        self.CONFIG_VERSION = '0.4'
-        self.TEST_IN_NAME = 'data/test/samples.txt'
-        self.TEST_OUT_SUFFIX = '_predictions.txt'
+        self.MODEL_DIR_BASE = config.get('Bot', 'modelDirBase')
+        self.MODEL_NAME_BASE = config.get('Bot', 'modelNameBase')
+        self.MODEL_EXT = config.get('Bot', 'modelExt')
+        self.CONFIG_FILENAME = config.get('Bot', 'configFilename')
+        self.CONFIG_VERSION = config.get('Bot', 'configVersion')
+        self.TEST_IN_NAME = config.get('Bot', 'testInName')
+        self.TEST_OUT_SUFFIX = config.get('Bot', 'testOutSuffix')
         self.SENTENCES_PREFIX = ['Q: ', 'A: ']
         self.reset = None
         self.create_dataset = None
-        self.device = 'gpu'
+        self.device = config.get('General', 'device')
 
     def load_config(self):
         #Todo:- Load all the required values from the required configs
         self.keep_all = False
-        self.epochs = 30
-        self.learning_rate = 1e-4
-        self.save_ckpt_at = 1000
-        self.batch_size = 10
-        self.DirName='/'.join(os.getcwd().split('/')[:-1])
-        config = configparser.ConfigParser()
-        config.read(self.DirName+"/Database/Config.ini");
-        self.global_step = int(config.get('Bot', 'globalStep'))
+        self.epochs = int(config.get('General', 'epochs'))
+        self.learning_rate =float(config.get('General', 'learningRate'))
+        self.save_ckpt_at = int(config.get('General', 'saveCkptAt'))
+        self.batch_size = int(config.get('General', 'batchSize'))
+        self.global_step = int(config.get('General', 'globalStep'))
         self.max_length = int(config.get('Dataset', 'maxLength'))
         self.watson_mode = bool(config.get('Bot', 'watsonMode'))
         self.auto_encode = bool(config.get('Bot', 'autoEncode'))
-        self.corpus = "Cornel" #Todo:- Fix this hardcode
+        self.corpus = config.get('Bot', 'corpus') #Todo:- Fix this hardcode
         self.dataset_tag = ""
         self.hidden_size = int(config.get('Model', 'hiddenSize'))
         self.num_layers =  int(config.get('Model', 'numLayers'))
         self.embedding_size = int(config.get('Model', 'embeddingSize'))
-        self.init_embeddings = False
+        self.init_embeddings = bool(config.get('General', 'initEmbeddings'))
         self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
         self.model_tag = None
-        self.test = False
+        self.test = bool(config.get('General', 'test'))
 
     def main(self, **kwargs):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)

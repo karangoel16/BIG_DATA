@@ -8,9 +8,9 @@ import math
 from dataset import dataset
 from model import RNNModel
 
-self.DirName='/'.join(os.getcwd().split('/')[:-1])
+DirName='/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
 config = configparser.ConfigParser()
-config.read(self.DirName+"/Database/Config.ini");
+config.read(DirName+"/Database/Config.ini");
 
 class Bot:
     "Bot framework which integrates all the component"
@@ -28,12 +28,12 @@ class Bot:
         self.saver = None
         self.model_dir = ''
         self.global_step = 0
-
+        self.DirName = DirName	
         self.session = None
         self.model_tag = None
         # Filename and directories constants
         # Todo:- Move following to seperate config files
-        self.root_dir = '/'.join(os.getcwd().split('/')[:-1])
+        self.root_dir = DirName#'/'.join(os.getcwd().split('/')[:-1])
         self.MODEL_DIR_BASE = config.get('Bot', 'modelDirBase')
         self.MODEL_NAME_BASE = config.get('Bot', 'modelNameBase')
         self.MODEL_EXT = config.get('Bot', 'modelExt')
@@ -62,7 +62,7 @@ class Bot:
         self.hidden_size = int(config.get('Model', 'hiddenSize'))
         self.num_layers =  int(config.get('Model', 'numLayers'))
         self.embedding_size = int(config.get('Model', 'embeddingSize'))
-        self.init_embeddings = bool(config.get('General', 'initEmbeddings'))
+        self.init_embeddings = bool(config.get('Bot', 'initEmbeddings'))
         self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
         self.model_tag = None
         self.test = bool(config.get('General', 'test'))
@@ -93,7 +93,7 @@ class Bot:
         )
 
         self.session.run(init_op)
-
+        print(self.test)
         if self.test:
             self.interactive_main();
         else:

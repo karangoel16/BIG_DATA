@@ -58,6 +58,11 @@ class dataset:
         self.var_word_id={};#this is to compute the number to word
         self.var_id_word={};#this is to compute the word to number
         self.var_max_length=int(Config.get('Dataset','maxLength'));
+        self.maxLenEnco=self.var_max_length;
+        self.maxLenDeco=self.maxLenEnco+2;
+        self.test=bool(Config.get('General','test'));
+        self.watson=bool(Config.get('Bot','watsonMode'));
+        self.autoencode=bool(Config.get('Bot','autoEncode'));
         dict_temp={};
         self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
 #we will save all the values in the dictionary in one go and will save this file
@@ -85,7 +90,7 @@ class dataset:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
                 self.var_sam_train.append([var_user_1_word,var_user_2_word]);
                 #print(var_user_1_word)
-                #print(self.seq_sent(var_user_1_word))
+                #print(self.sequence2str(var_user_1_word))
             
     def token_(self,line,var_target=False):
         
@@ -213,7 +218,7 @@ class dataset:
             var_seq.append(np.argmax(var_dec))
         return var_seq;
     
-    def seq_sent(self,seq,cl=False,reverse=False):
+    def sequence2str(self,seq,cl=False,reverse=False):
         if not seq:
             return None;
         if not cl:
@@ -228,7 +233,7 @@ class dataset:
             var_sent.reverse()
         return self.detokenize(var_sent);
     
-    def sentence_id(self,var_sent):
+    def senetence2enco(self,var_sent):
         if sentence == "":
             return None;#this is to check if the sentence which we have sent has some value in the string or not
         var_tokens=nltk.word_tokenize(sent);
@@ -250,23 +255,27 @@ class dataset:
         for i in range(var_batch_size):
             var_sample=var_samples[i]
             #TODO Mode check:
-            var_sample = list(reversed(var_sample))
+            if not self.test and self.watson:
+            	var_sample = list(reversed(var_sample))
+            if not self.test and self.autoencode:
+            	k=random.randint(0,1);
+            	var_sample=(var_sample[k],var_sample[k])
             var_batch.var_encoder.append(list(reversed(var_sample[0])))
             var_batch.var_decoder.append([self.var_token]+var_sample[1]+[self.var_token])
             #print(len(var_batch.var_encoder[i]))
             #print(len(var_batch.var_decoder[i]))
             #print(self.var_max_length)
             var_batch.var_target.append(var_batch.var_decoder[-1][1:])
-            assert len(var_batch.var_encoder[i])<=self.var_max_length
-            assert len(var_batch.var_decoder[i])<=self.var_max_length+2
-            var_batch.var_encoder[i] = [self.var_pad]*(self.var_max_length-len(var_batch.var_encoder[i]))+var_batch.var_encoder[i]
-            var_batch.var_decoder[i] = [self.var_pad]*(self.var_max_length+2-len(var_batch.var_decoder[i]))+var_batch.var_decoder[i]
-            var_batch.var_target[i]=var_batch.var_target[i] +[self.var_pad]*(self.var_max_length+2-len(var_batch.var_target[i]))
-            var_batch.var_weight.append([1.0]*len(var_batch.var_target[i]+[0.0]*(self.var_max_length+2-len(var_batch.var_target[i]))))
+            assert len(var_batch.var_encoder[i])<=self.maxLenEnco
+            assert len(var_batch.var_decoder[i])<=self.maxLenDeco
+            var_batch.var_encoder[i] = [self.var_pad]*(self.maxLenEnco-len(var_batch.var_encoder[i]))+var_batch.var_encoder[i]
+            var_batch.var_decoder[i] = [self.var_pad]*(self.maxLenDeco-len(var_batch.var_decoder[i]))+var_batch.var_decoder[i]
+            var_batch.var_target[i]=var_batch.var_target[i] +[self.var_pad]*(self.maxLenDeco-len(var_batch.var_target[i]))
+            var_batch.var_weight.append([1.0]*len(var_batch.var_target[i]+[0.0]*(self.maxLenDeco-len(var_batch.var_target[i]))))
             ##need to write more code here
         var_encoders=[];
         #print(var_batch.var_encoder)
-        for i in range(self.var_max_length):
+        for i in range(self.maxLenEnco):
             var_encoder=[]
             for j in range(var_batch_size):
                 #print(var_batch.var_encoder[j][i])
@@ -276,7 +285,7 @@ class dataset:
         var_decoders=[]
         var_targets=[]
         var_weights=[]
-        for i in range(self.var_max_length+2):
+        for i in range(self.maxLenDeco):
             var_decoder=[]
             var_target=[]
             var_weight=[]
@@ -320,13 +329,13 @@ class dataset:
                     else t
             for t in tokens]).strip().capitalize()
     
-    def batch_seq_str(self,var_batch,seq_id=0):
+    def batch_seq2str(self,var_batch,seq_id=0):
         var_seq=[]
         for i in range(len(var_batch)):
             var_seq.append(var_batch[i][seq_id])
-        return self.seq_sent(var_seq);
+        return self.sequence2str(var_seq);
     
-    def id_sent(self,decoder_output):
+    def deco2sentence(self,decoder_output):
         var_sequence=[]
         for out in decoder_output:
             sequence.append(np.argmax(out))

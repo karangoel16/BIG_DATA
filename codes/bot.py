@@ -327,20 +327,20 @@ class Bot:
         config = configparser.ConfigParser()
         general = {
             "version": self.CONFIG_VERSION,
-            "global_step": self.global_step,
-            "max_length": self.max_length,
-            "watson_mode": self.watson_mode,
-            "auto_encode":  self.auto_encode,
+            "global_step": str(self.global_step),
+            "max_length": str(self.max_length),
+            "watson_mode": str(self.watson_mode),
+            "auto_encode":  str(self.auto_encode),
             "corpus": self.corpus,
             "dataset_tag": self.dataset_tag  
         }
         config["General"] = general
         network = {
-            "hidden_size": self.hidden_size,
-            "num_layers": self.num_layers,
-            "embedding_size": self.embedding_size,
-            "init_embeddings": self.init_embeddings,
-            "softmax_samples": self.softmax_samples
+            "hidden_size": str(self.hidden_size),
+            "num_layers": str(self.num_layers),
+            "embedding_size": str(self.embedding_size),
+            "init_embeddings": str(self.init_embeddings),
+            "softmax_samples": str(self.softmax_samples)
         }
         config["Network"] = network
         # Keep track of the learning params (but without restoring them)

@@ -220,7 +220,7 @@ class dataset:
             var_seq.append(np.argmax(var_dec))
         return var_seq;
     def test(self):
-	print("Dataset Test Confirmed");
+        print("Dataset Test Confirmed");
     def sequence2str(self,seq,cl=False,reverse=False):
         if not seq:
             return None;

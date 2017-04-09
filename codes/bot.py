@@ -20,7 +20,7 @@ class Bot:
         # set the appropriate values from config compared to what was use as args
         # in original code
 
-        self.text_data = None  # Dataset
+        self.text_data = dataset()  # Dataset
         self.model = None  # Sequence to sequence model
 
         # Tensorflow utilities for convenience saving/logging
@@ -75,7 +75,7 @@ class Bot:
 
         self.load_model_params()
 
-        self.text_data = dataset()
+        #self.text_data = dataset()
         self.load_config()
 
         print(self.text_data)

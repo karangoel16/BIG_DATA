@@ -219,7 +219,8 @@ class dataset:
         for i in var_dec:
             var_seq.append(np.argmax(var_dec))
         return var_seq;
-    
+    def test(self):
+	print("Dataset Test Confirmed");
     def sequence2str(self,seq,cl=False,reverse=False):
         if not seq:
             return None;
@@ -235,7 +236,7 @@ class dataset:
             var_sent.reverse()
         return self.detokenize(var_sent);
     
-    def senetence2enco(self,var_sent):
+    def sentence2enco(self,var_sent):
         if sentence == "":
             return None;#this is to check if the sentence which we have sent has some value in the string or not
         var_tokens=nltk.word_tokenize(sent);

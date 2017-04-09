@@ -102,9 +102,6 @@ class Bot:
         self.session.close()
         print("Say Bye Bye to SmartGator! ;)")
     
-    def _save_session(self, session):
-        self.saver.save(session, self._model_name())
-
     # Implementtion done, Testing remains
     def train_model(self, session):
         merged_summaries = tf.summary.merge_all()

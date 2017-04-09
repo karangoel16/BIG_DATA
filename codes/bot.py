@@ -48,7 +48,7 @@ class Bot:
 
     def load_config(self):
         #Todo:- Load all the required values from the required configs
-        self.keep_all = False
+        self.keep_all = int(config.get('General','keepall'))
         self.epochs = int(config.get('General', 'epochs'))
         self.learning_rate =float(config.get('Model', 'learningRate'))
         self.save_ckpt_at = int(config.get('General', 'saveCkptAt'))

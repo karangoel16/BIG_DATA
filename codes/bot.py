@@ -48,15 +48,15 @@ class Bot:
 
     def load_config(self):
         #Todo:- Load all the required values from the required configs
-        self.keep_all = int(config.get('General','keepall'))
+        self.keep_all = config['General'].getboolean('keepall')
         self.epochs = int(config.get('General', 'epochs'))
         self.learning_rate =float(config.get('Model', 'learningRate'))
         self.save_ckpt_at = int(config.get('General', 'saveCkptAt'))
         self.batch_size = int(config.get('General', 'batchSize'))
         self.global_step = int(config.get('General', 'globalStep'))
         self.max_length = int(config.get('Dataset', 'maxLength'))
-        self.watson_mode = config['General'].getboolean('watsonMode')
-        self.auto_encode = config['General'].getboolean('autoEncode')
+        self.watson_mode = config['Bot'].getboolean('watsonMode')
+        self.auto_encode = config['Bot'].getboolean('autoEncode')
         self.corpus = config.get('Bot', 'corpus') #Todo:- Fix this hardcode
         self.dataset_tag = ""
         self.hidden_size = int(config.get('Model', 'hiddenSize'))
@@ -95,6 +95,7 @@ class Bot:
         self.session.run(init_op)
         #print(self.test)
         if self.test:
+        	#TODO: Adding manage session here
             self.interactive_main(self.session);
         else:
             self.train_model(self.session)

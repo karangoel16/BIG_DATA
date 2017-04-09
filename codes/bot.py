@@ -22,7 +22,7 @@ class Bot:
 
         self.text_data = None  # Dataset
         self.model = None  # Sequence to sequence model
-
+        self.verbose = None
         # Tensorflow utilities for convenience saving/logging
         self.writer = None
         self.saver = None
@@ -191,7 +191,7 @@ class Bot:
                 print('Out of my scope .. ask something simpler!')
                 continue
 
-            print('{}{}'.format(self.SENTENCES_PREFIX[1],self.text_data.sequence2str(answer,clean=True)))
+            print('{}{}'.format(self.SENTENCES_PREFIX[1],self.text_data.sequence2str(answer,cl=True)))
 
             if self.verbose:
                 print(self.text_data.batch_seq2str(question_seq,clean=True,reverse=True))
@@ -200,7 +200,7 @@ class Bot:
             print()
 
     def predict_single(self, question, question_seq=None):
-
+        #print(self.text_data.test_())
         batch = self.text_data.sentence2enco(question)
         if not batch:
             return None
@@ -210,8 +210,8 @@ class Bot:
         # Run the model
         ops, feedDict = self.model.step(batch)
         output = self.session.run(ops[0], feedDict)  # TODO: Summarize the output too (histogram, ...)
+        #print(output)
         answer = self.text_data.deco2sentence(output)
-
         return answer
 
     def predict_daemon(self,sentence):

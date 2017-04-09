@@ -50,7 +50,7 @@ class Bot:
         #Todo:- Load all the required values from the required configs
         self.keep_all = False
         self.epochs = int(config.get('General', 'epochs'))
-        self.learning_rate =float(config.get('General', 'learningRate'))
+        self.learning_rate =float(config.get('Model', 'learningRate'))
         self.save_ckpt_at = int(config.get('General', 'saveCkptAt'))
         self.batch_size = int(config.get('General', 'batchSize'))
         self.global_step = int(config.get('General', 'globalStep'))

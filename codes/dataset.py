@@ -50,7 +50,7 @@ class dataset:
         #print(config_file);
         Config.read(config_file);
         self.choice=int(Config.get('Dataset','choice'));
-        self.batch_size=int(Config.get('Dataset','batch_size'));
+        self.batch_size=int(Config.get('General','batchSize'));
         self.var_pad=-1;
         self.var_eos=-1;
         #self.var_unique=-1;

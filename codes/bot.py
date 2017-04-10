@@ -83,19 +83,20 @@ class Bot:
             self.model = RNNModel(self.text_data)
 
         #print (self._get_summary_name())
-        init_op = tf.global_variables_initializer()
+        #init_op = tf.global_variables_initializer()
         self.writer = tf.summary.FileWriter(self._get_summary_name())
-        self.saver = tf.train.Saver(max_to_keep=200)
+        self.saver = tf.train.Saver(max_to_keep=200, write_version=tf.train.SaverDef.V1)
 
         self.session = tf.Session(config=tf.ConfigProto(
             allow_soft_placement=True,
             log_device_placement=False)
         )
 
-        self.session.run(init_op)
+        print("Initializing tf variables")
+        self.session.run(tf.global_variables_initializer())
         #print(self.test)
         if self.test:
-        	#TODO: Adding manage session here
+            self.manage_previous_model(self.session)
             self.interactive_main(self.session);
         else:
             self.train_model(self.session)
@@ -244,7 +245,7 @@ class Bot:
         # Define new model here #
         # TO DO 406-434#
 
-    def manage_previous_mode(self,session):
+    def manage_previous_model(self,session):
         model_name = self._get_model_name()
 
         if os.listdir(self.model_dir):

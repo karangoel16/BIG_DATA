@@ -10,13 +10,27 @@ class initializer:
         assert len(shape) == 2
         self.scope = scope
         #TODO:- Check if this thing is correct for self.W and self.b
-        self.W = tf.truncated_normal(0.1, shape)
-        self.b = tf.constant(0.1, shape[1])
+        #self.W = tf.truncated_normal(0.1, shape)
+        #self.b = tf.constant(0.1, shape[1])
+        with tf.variable_scope('weights_' + self.scope):
+            self.W = tf.get_variable(
+                'weights',
+                shape,
+                # initializer=tf.truncated_normal_initializer()  # TODO: Tune value (fct of input size: 1/sqrt(input_dim))
+                dtype=dtype
+            )
+            self.b = tf.get_variable(
+                'bias',
+                shape[1],
+                initializer=tf.constant_initializer(),
+                dtype=dtype
+            )
     def get_weight(self):
         return self.W, self.b
     def _call_(self, X):
         #TODO:- check if name scope is necessary
-        return tf.matmul(X, self.W) + self.b
+        with tf.name_scope(self.scope):
+            return tf.matmul(X, self.W) + self.b
     
 #list of args
 #learning rate 0.001

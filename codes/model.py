@@ -29,7 +29,7 @@ class RNNModel:
         config = cp.ConfigParser()
         self.DirName='/'.join(os.getcwd().split('/')[:-1]);
         config.read(self.DirName+"/Database/Config.ini");
-        self.test = None
+        self.test = config['General'].getboolean('test')
         self.textdata = text_data       #this will keep the text data object
         self.dtype = tf.float32
         self.encoder = None
@@ -104,7 +104,9 @@ class RNNModel:
             output_projection=outputProjection.getWeights() if outputProjection else None,
             feed_previous=bool(self.test)
             )
+        print(self.test)
         if self.test:
+            #print(decoder_outputs)
             if not outputProjection:
                 self.outputs = decoder_outputs
             else:

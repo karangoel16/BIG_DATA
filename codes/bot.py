@@ -20,9 +20,9 @@ class Bot:
         # set the appropriate values from config compared to what was use as args
         # in original code
 
-        self.text_data = None  # Dataset
+        self.text_data = dataset()  # Dataset
         self.model = None  # Sequence to sequence model
-
+        self.verbose = None
         # Tensorflow utilities for convenience saving/logging
         self.writer = None
         self.saver = None
@@ -50,7 +50,7 @@ class Bot:
         #Todo:- Load all the required values from the required configs
         self.keep_all = False
         self.epochs = int(config.get('General', 'epochs'))
-        self.learning_rate =float(config.get('General', 'learningRate'))
+        self.learning_rate =float(config.get('Model', 'learningRate'))
         self.save_ckpt_at = int(config.get('General', 'saveCkptAt'))
         self.batch_size = int(config.get('General', 'batchSize'))
         self.global_step = int(config.get('General', 'globalStep'))
@@ -75,7 +75,7 @@ class Bot:
 
         self.load_model_params()
 
-        self.text_data = dataset()
+        #self.text_data = dataset()
         self.load_config()
 
         print(self.text_data)
@@ -103,9 +103,6 @@ class Bot:
         self.session.close()
         print("Say Bye Bye to SmartGator! ;)")
     
-    def _save_session(self, session):
-        self.saver.save(session, self._model_name())
-
     # Implementtion done, Testing remains
     def train_model(self, session):
         merged_summaries = tf.summary.merge_all()
@@ -195,7 +192,7 @@ class Bot:
                 print('Out of my scope .. ask something simpler!')
                 continue
 
-            print('{}{}'.format(self.SENTENCES_PREFIX[1],self.text_data.sequence2str(answer,clean=True)))
+            print('{}{}'.format(self.SENTENCES_PREFIX[1],self.text_data.sequence2str(answer,cl=True)))
 
             if self.verbose:
                 print(self.text_data.batch_seq2str(question_seq,clean=True,reverse=True))
@@ -204,7 +201,7 @@ class Bot:
             print()
 
     def predict_single(self, question, question_seq=None):
-
+        #print(self.text_data.test_())
         batch = self.text_data.sentence2enco(question)
         if not batch:
             return None
@@ -214,8 +211,8 @@ class Bot:
         # Run the model
         ops, feedDict = self.model.step(batch)
         output = self.session.run(ops[0], feedDict)  # TODO: Summarize the output too (histogram, ...)
+        #print(output)
         answer = self.text_data.deco2sentence(output)
-
         return answer
 
     def predict_daemon(self,sentence):

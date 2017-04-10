@@ -50,7 +50,7 @@ class dataset:
         #print(config_file);
         Config.read(config_file);
         self.choice=int(Config.get('Dataset','choice'));
-        self.batch_size=int(Config.get('Dataset','batch_size'));
+        self.batch_size=int(Config.get('General','batchSize'));
         self.var_pad=-1;
         self.var_eos=-1;
         #self.var_unique=-1;
@@ -140,7 +140,7 @@ class dataset:
                         self.var_corpus_name=dict_temp['CorpusName'];
                         #self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
                         self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
-                        break;	
+                        break;  
             path=self.var_corpus_loc;
             if self.var_corpus_name=='cornell':
                 t=cornell_data(path);
@@ -182,7 +182,7 @@ class dataset:
 
     def save_dataset(self):
         path=self.var_corpus_dict;
-        print(path)
+        #print(path)
         with open(path,'wb') as f:
             data={'word_id':self.var_word_id,
                   'id_word':self.var_id_word,
@@ -219,7 +219,8 @@ class dataset:
         for i in var_dec:
             var_seq.append(np.argmax(var_dec))
         return var_seq;
-    
+    def test(self):
+        print("Dataset Test Confirmed");
     def sequence2str(self,seq,cl=False,reverse=False):
         if not seq:
             return None;
@@ -235,22 +236,22 @@ class dataset:
             var_sent.reverse()
         return self.detokenize(var_sent);
     
-    def senetence2enco(self,var_sent):
-        if sentence == "":
+    def sentence2enco(self,var_sent):
+        if var_sent == "":
             return None;#this is to check if the sentence which we have sent has some value in the string or not
-        var_tokens=nltk.word_tokenize(sent);
-        if len(var_tokens) > self.var_max_lengh:
+        var_tokens=nltk.word_tokenize(var_sent);
+        if len(var_tokens) > self.var_max_length:
             return None; #since we have not trained our data set on this datas
         word_id=[];
         for t in var_tokens:
-            word_id=self.word_id(t,False);#we do not want new element should be added to the dictionary as this might not be correct word too
+            word_id.append(self.word_id(t,False));#we do not want new element should be added to the dictionary as this might not be correct word too
         '''We need to create batch so that it can be sent to the model inside'''
         var_batch=self.create_batch([[word_id,[]]])
-        return batch
+        return var_batch
     def vocab_size(self):
-    	return len(self.var_word_id)
+        return len(self.var_word_id)
     def sample_size(self):
-    	return len(self.var_sam_train)	    
+        return len(self.var_sam_train)      
     def create_batch(self,var_samples):
         var_batch=batch()
         var_batch_size=len(var_samples)
@@ -258,10 +259,10 @@ class dataset:
             var_sample=var_samples[i]
             #TODO Mode check:
             if not self.test and self.watson:
-            	var_sample = list(reversed(var_sample))
+                var_sample = list(reversed(var_sample))
             if not self.test and self.autoencode:
-            	k=random.randint(0,1);
-            	var_sample=(var_sample[k],var_sample[k])
+                k=random.randint(0,1);
+                var_sample=(var_sample[k],var_sample[k])
             var_batch.var_encoder.append(list(reversed(var_sample[0])))
             var_batch.var_decoder.append([self.var_token]+var_sample[1]+[self.var_token])
             #print(len(var_batch.var_encoder[i]))
@@ -284,6 +285,7 @@ class dataset:
                 var_encoder.append(var_batch.var_encoder[j][i])
             var_encoders.append(var_encoder)
         var_batch.var_encoder=var_encoders
+        #print(var_batch.var_encoder)
         var_decoders=[]
         var_targets=[]
         var_weights=[]
@@ -325,6 +327,7 @@ class dataset:
         return batches
    
     def detokenize(self, tokens):
+        return " ".join(tokens).strip().capitalize()
         return ''.join([
             ' ' + t if not t.startswith('\'') and
                        t not in string.punctuation
@@ -339,9 +342,11 @@ class dataset:
     
     def deco2sentence(self,decoder_output):
         var_sequence=[]
+        if decoder_output==None:
+            return None    
         for out in decoder_output:
-            sequence.append(np.argmax(out))
-        return sequence;
+            var_sequence.append(np.argmax(out))
+        return var_sequence;
 if __name__ == "__main__":        
     t=dataset();#we have to enter the path Name    
     #print(t.getBatches())

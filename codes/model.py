@@ -96,7 +96,7 @@ class RNNModel:
         if not self.test:  # TODO: Should use a placeholder instead
             enc_dec_cell = tf.contrib.rnn.DropoutWrapper(enc_dec_cell,
                                                          input_keep_prob=1.0,
-                                                         output_keep_prob=0.5)
+                                                         output_keep_prob=0.9)
         enc_dec_cell = tf.contrib.rnn.MultiRNNCell([enc_dec_cell] * self.numLayers,
                                                    state_is_tuple=True)
         with tf.name_scope('placeholder_encoder'):

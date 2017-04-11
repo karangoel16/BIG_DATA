@@ -48,6 +48,7 @@ class RNNModel:
         self.dtype = tf.float32
         self.encoder = None
         self.decoder = None
+        self.dropout = 0.9
         self.decoder_target = None
         self.decoder_weight = None
         self.loss_fct = None
@@ -66,7 +67,7 @@ class RNNModel:
         outputProjection = None
         # Sampled softmax only makes sense if we sample less than vocabulary size.
         if 0 < self.softmaxSamples < self.textdata.vocab_size():
-            outputProjection = ProjectionOp(
+            outputProjection = initializer(
                 (self.hiddenSize, self.textdata.vocab_size()),
                 scope='softmax_projection',
                 dtype=self.dtype
@@ -96,7 +97,7 @@ class RNNModel:
         if not self.test:  # TODO: Should use a placeholder instead
             enc_dec_cell = tf.contrib.rnn.DropoutWrapper(enc_dec_cell,
                                                          input_keep_prob=1.0,
-                                                         output_keep_prob=0.5)
+                                                         output_keep_prob=self.dropout)
         enc_dec_cell = tf.contrib.rnn.MultiRNNCell([enc_dec_cell] * self.numLayers,
                                                    state_is_tuple=True)
         with tf.name_scope('placeholder_encoder'):
@@ -118,7 +119,7 @@ class RNNModel:
             output_projection=outputProjection.getWeights() if outputProjection else None,
             feed_previous=bool(self.test)
             )
-        print(self.test)
+        #print(self.test)
         if self.test:
             #print(decoder_outputs)
             if not outputProjection:

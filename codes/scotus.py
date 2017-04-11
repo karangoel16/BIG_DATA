@@ -1,45 +1,50 @@
 import os
 import sys
-import argparse
 
 class scotus:
     def __init__(self,dirName):
-        '''
-            dirName is the place where we will get ubuntu dataset
-        '''
-        if not dirName:
+        dirName=os.path.join(dirName,"")
+        print(dirName)
+    #here we will check if we do not enter any dirName or directory doesn't exist we simply come out of the cornell
+        if not os.path.exists(dirName):
+            print("PATH ERROR")
+            return ;
+        '''if not dirName:
             return ;#this will return the function
         try:
             test=sys.argv[1];
         except:
             test="normal";
-        self.max_dir=10;
+        self.max_dir=10;'''
         self.conversation=[];#this is the data dictionary
-        dir=os.path.join(dirName,'');
+        dir=os.path.join(dirName,'')
         #this is to call for how many directories you want to 
         num_sub=0;
-        #print(dir);
+        print(dir)
         if(not os.path.exists(dir)):
             print("FILE NOT FOUND")
             return ;
         else:
-            for f in os.scandir(dir):
-                self.conversation.append({'lines':self.loadlines(f)});
-            #print(self.conversation);
-                
-    #the function has been kept with similar names in all the corpus to keep uniformity
+            self.conversation.append({'lines':self.loadlines(os.path.join(dirName, "scotus"))});
+
     def loadlines(self,filename):
         '''
             this function takes all the data from the user and is able to return a dictionary with the string
             of the lines spoken in that particular file
         '''
-        lines=[];#this will keep the lines in the data set
-        with open(filename.path,'r') as f:
-            #this will open the lines to extract the lines from the user
+        lines = []
+
+        with open(filename, 'r') as f:
             for line in f:
-                #point 1: we are able to reach to the line level now we need to extract the lines from the user
-                values = line.split(":");#this will split the lines in tabs
-                lines.append({"text":values[1]});
-        return lines;
+                l = line[line.index(":")+1:].strip()  # Strip name of speaker.
+
+                lines.append({"text": l})
+
+        return lines
+
     def getconversation(self):
         return self.conversation;
+
+if __name__=="__main__":
+	t=scotus('/cise/homes/kgoel/Downloads/BIG_DATA/Corpus/SCOTUS/');
+	print(t.getconversation());

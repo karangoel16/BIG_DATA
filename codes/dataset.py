@@ -140,6 +140,7 @@ class dataset:
                         self.var_corpus_name=dict_temp['CorpusName'];
                         #self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
                         self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
+                        print(self.var_c)
                         break;  
             path=self.var_corpus_loc;
             if self.var_corpus_name=='cornell':
@@ -349,4 +350,4 @@ class dataset:
         return var_sequence;
 if __name__ == "__main__":        
     t=dataset();#we have to enter the path Name    
-    #print(t.getBatches())
+    print(t.getBatches())

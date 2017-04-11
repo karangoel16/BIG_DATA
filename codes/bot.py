@@ -296,8 +296,8 @@ class Bot:
 
             self.global_step = config['General'].getint('global_step')
             self.max_length = config['General'].getint('max_length')
-            self.watson_mode = config['Bot'].getboolean('watson_mode')
-            self.auto_encode = config['Bot'].getboolean('auto_encode')
+            self.watson_mode = config['General'].getboolean('watson_mode')
+            self.auto_encode = config['General'].getboolean('auto_encode')
             self.corpus = config['General'].get('corpus')
             self.dataset_tag = config['General'].get('dataset_tag', '')
             self.hidden_size = config['Network'].getint('hidden_size')

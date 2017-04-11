@@ -50,6 +50,7 @@ class Bot:
         #Todo:- Load all the required values from the required configs
         self.keep_all = config['General'].getboolean('keepall')
         self.epochs = int(config.get('General', 'epochs'))
+        self.current_epoch = 0
         self.learning_rate =float(config.get('Model', 'learningRate'))
         self.save_ckpt_at = int(config.get('General', 'saveCkptAt'))
         self.batch_size = int(config.get('General', 'batchSize'))
@@ -71,12 +72,11 @@ class Bot:
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
         print("SmartGator Intelligent chatbot")
 
-        self.root_dir = os.getcwd()
-
-        self.load_model_params()
+        self.root_dir = os.getcwd() 
 
         #self.text_data = dataset()
         self.load_config()
+        self.load_model_params()
 
         print(self.text_data)
         with tf.device(self.get_device()):
@@ -95,8 +95,8 @@ class Bot:
         print("Initializing tf variables")
         self.session.run(tf.global_variables_initializer())
         #print(self.test)
-        if self.test:
-            self.manage_previous_model(self.session)
+        self.manage_previous_model(self.session)
+        if self.test: 
             self.interactive_main(self.session);
         else:
             self.train_model(self.session)
@@ -115,7 +115,10 @@ class Bot:
         print('Training begining (press Ctrl+C to save and exit)...')
 
         try:
-            for epoch in range(self.epochs):
+            if self.current_epoch == self.epochs:
+                #TODO: User input if neccessary
+                return
+            for epoch in range(self.current_epoch, self.epochs):
                 print(
                       "\n----- Epoch {}/{} ; (lr={}) -----".format(
                         epoch+1,
@@ -124,6 +127,7 @@ class Bot:
                         )
                       )
                 batches = self.text_data.getBatches()
+                local_step = 0
 
                 for curr_batch in batches:
                     ops, feed_dict = self.model.step(curr_batch)
@@ -131,10 +135,11 @@ class Bot:
                     _, loss, summary = session.run(ops + tuple([merged_summaries]), feed_dict)
                     self.writer.add_summary(summary, self.global_step)
                     self.global_step += 1
+                    local_step += 1
 
                     if self.global_step % 100 == 0:
                         perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                        print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f" % (self.global_step, len(batches), loss, perplexity))
+                        print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep" % (local_step, len(batches), loss, perplexity, self.global_step)) 
 
                     #Save checkpoint
                     if self.global_step % self.save_ckpt_at == 0:
@@ -296,8 +301,8 @@ class Bot:
 
             self.global_step = config['General'].getint('global_step')
             self.max_length = config['General'].getint('max_length')
-            self.watson_mode = config['Bot'].getboolean('watson_mode')
-            self.auto_encode = config['Bot'].getboolean('auto_encode')
+            self.watson_mode = config['General'].getboolean('watson_mode')
+            self.auto_encode = config['General'].getboolean('auto_encode')
             self.corpus = config['General'].get('corpus')
             self.dataset_tag = config['General'].get('dataset_tag', '')
             self.hidden_size = config['Network'].getint('hidden_size')
@@ -305,7 +310,7 @@ class Bot:
             self.embedding_size = config['Network'].getint('embedding_size')
             self.init_embeddings = config['Network'].getboolean('init_embeddings')
             self.softmax_samples = config['Network'].getint('softmax_samples')
-
+            self.current_epoch = config['General'].getint('epoch')
             # Print the restored params
             print()
             print('Warning: Restoring parameters:')
@@ -320,6 +325,7 @@ class Bot:
             print('embeddingSize: {}'.format(self.embedding_size))
             print('initEmbeddings: {}'.format(self.init_embeddings))
             print('softmaxSamples: {}'.format(self.softmax_samples))
+            print('current_epoch: {}'.format(self.current_epoch))
             print()
 
     def save_model_params(self):
@@ -331,7 +337,8 @@ class Bot:
             "watson_mode": str(self.watson_mode),
             "auto_encode":  str(self.auto_encode),
             "corpus": self.corpus,
-            "dataset_tag": self.dataset_tag  
+            "dataset_tag": self.dataset_tag,
+            "epoch": self.current_epoch
         }
         config["General"] = general
         network = {

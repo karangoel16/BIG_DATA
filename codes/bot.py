@@ -139,7 +139,8 @@ class Bot:
 
                     if self.global_step % 100 == 0:
                         perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                        print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep" % (local_step, len(batches), loss, perplexity, self.global_step)) 
+                        print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep" % (local_step, len(batches), loss, perplexity, self.global_step))
+
 
                     #Save checkpoint
                     if self.global_step % self.save_ckpt_at == 0:

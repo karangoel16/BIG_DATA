@@ -27,7 +27,8 @@ class initializer:
             )
     def get_weight(self):
         return self.W, self.b
-    def _call_(self, X):
+
+    def __call__(self, X):
         #TODO:- check if name scope is necessary
         with tf.name_scope(self.scope):
             return tf.matmul(X, self.W) + self.b
@@ -48,7 +49,7 @@ class RNNModel:
         self.dtype = tf.float32
         self.encoder = None
         self.decoder = None
-        self.dropout = 0.9
+        self.dropout = config['General'].getfloat('dropout')
         self.decoder_target = None
         self.decoder_weight = None
         self.loss_fct = None
@@ -98,16 +99,16 @@ class RNNModel:
             enc_dec_cell = tf.contrib.rnn.DropoutWrapper(enc_dec_cell,
                                                          input_keep_prob=1.0,
                                                          output_keep_prob=self.dropout)
-        enc_dec_cell = tf.contrib.rnn.MultiRNNCell([enc_dec_cell] * self.numLayers,
-                                                   state_is_tuple=True)
+        enc_dec_cell = tf.contrib.rnn.MultiRNNCell([enc_dec_cell] * self.numLayers,state_is_tuple=True)
+
         with tf.name_scope('placeholder_encoder'):
             self.encoder  = [tf.placeholder(tf.int32, [None, ]) for _ in range(self.maxLenEnco)]
 
         with tf.name_scope('placeholder_decoder'):
             #TODO:- check if operation name is not necessary for placeholders
-            self.decoder  = [tf.placeholder(tf.int32, [None, ]) for _ in range(self.maxLenDeco)]
-            self.decoder_weights=[tf.placeholder(tf.float32,[None,]) for _ in range(self.maxLenDeco)];
-            self.decoder_targets  = [tf.placeholder(tf.int32, [None, ]) for _ in range(self.maxLenDeco)]
+            self.decoder  = [tf.placeholder(tf.int32,[None, ],name='inputs') for _ in range(self.maxLenDeco)]
+            self.decoder_weights=[tf.placeholder(tf.float32,[None,],name='weights') for _ in range(self.maxLenDeco)];
+            self.decoder_targets  = [tf.placeholder(tf.int32, [None, ],name='targets') for _ in range(self.maxLenDeco)]
 
         decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
             self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
@@ -126,7 +127,9 @@ class RNNModel:
                 self.outputs = decoder_outputs
             else:
                 self.outputs = [outputProjection(output) for output in decoder_outputs]
-        else:#this is when we are not testing on our model but train our system
+        
+        else:
+            #this is when we are not testing on our model but train our system
             self.loss_fct = tf.contrib.legacy_seq2seq.sequence_loss(
                 decoder_outputs,
                 self.decoder_targets,

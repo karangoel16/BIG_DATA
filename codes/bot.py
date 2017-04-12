@@ -145,7 +145,7 @@ class Bot:
                     #Save checkpoint
                     if self.global_step % self.save_ckpt_at == 0:
                         self._save_session(session)
-
+                self.current_epoch += 1
         except (KeyboardInterrupt, SystemExit):
             print("Saving state and Exiting the program")
 

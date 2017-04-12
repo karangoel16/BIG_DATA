@@ -7,6 +7,7 @@ import configparser as cp
 from cornell import cornell_data
 from scotus import scotus
 from ubuntu import ubuntu
+from collections import OrderedDict
 import numpy as np
 
 class batch:
@@ -156,13 +157,14 @@ class dataset:
         else:
             #we need to load data set here
             self.load_dataset();#this is place where we will load the dataset
-            
+        assert self.var_pad == 0    
             
     def create_corpus(self,conversations):
         self.var_pad = self.word_id('<pad>')  # Padding (Warning: first things to add > id=0 !!)
         self.var_token = self.word_id('<go>')  # Start of sequence
         self.var_eos = self.word_id('<eos>')  # End of sequence
         self.var_unknown = self.word_id('<unknown>')  # Word dropped from vocabulary
+        print(self.var_pad)
         for conversation in conversations:
             self.conv_set(conversation);
             
@@ -177,7 +179,6 @@ class dataset:
                 self.var_word_id[word]=word_len;#this is to add the dictionary of the word in the list to encode
                 self.var_id_word[word_len]=word;#this is to add the dictionary of the word to decode
             else:
-                self.var_word_id[word]=self.var_unknown;
                 word_len=self.var_unknown;
         return word_len;#this is to add the word back into the dictionary
 
@@ -188,10 +189,6 @@ class dataset:
             data={'word2id':self.var_word_id,
                   'id2word':self.var_id_word,
                   'trainingSamples':self.var_sam_train,
-                  '<pad>':self.var_pad,
-                  '<unknown>':self.var_unknown,
-                  '<eos>':self.var_eos,
-                  '<go>':self.var_token
                  };
             pickle.dump(data,f,-1);
         #except:
@@ -205,10 +202,10 @@ class dataset:
                 self.var_word_id=data['word2id'];
                 self.var_id_word=data['id2word'];
                 self.var_sam_train=data['trainingSamples']
-                self.var_pad=var_word_id['<pad>'];
-                self.var_token=var_word_id['<go>'];
-                self.var_eos=var_word_id['<eos>'];
-                self.var_unknown=var_word_id['<unknown>'];
+                self.var_pad=self.var_word_id['<pad>'];
+                self.var_token=self.var_word_id['<go>'];
+                self.var_eos=self.var_word_id['<eos>'];
+                self.var_unknown=self.var_word_id['<unknown>'];  
         except:
             print("Error in load dataset");
 
@@ -273,7 +270,7 @@ class dataset:
             assert len(var_batch.var_encoder[i])<=self.maxLenEnco
             assert len(var_batch.var_decoder[i])<=self.maxLenDeco
             var_batch.var_encoder[i] = [self.var_pad]*(self.maxLenEnco-len(var_batch.var_encoder[i]))+var_batch.var_encoder[i]
-            var_batch.var_decoder[i] = [self.var_pad]*(self.maxLenDeco-len(var_batch.var_decoder[i]))+var_batch.var_decoder[i]
+            var_batch.var_decoder[i] = var_batch.var_decoder[i]+[self.var_pad]*(self.maxLenDeco-len(var_batch.var_decoder[i]))
             var_batch.var_target[i]=var_batch.var_target[i] +[self.var_pad]*(self.maxLenDeco-len(var_batch.var_target[i]))
             var_batch.var_weight.append([1.0]*len(var_batch.var_target[i]+[0.0]*(self.maxLenDeco-len(var_batch.var_target[i]))))
             ##need to write more code here
@@ -313,7 +310,6 @@ class dataset:
             list<Batch>: Get a list of the batches for the next epoch
         """
         random.shuffle(self.var_sam_train);
-
         batches = []
 
         def genNextSamples():
@@ -350,4 +346,4 @@ class dataset:
         return var_sequence;
 if __name__ == "__main__":        
     t=dataset();#we have to enter the path Name    
-    print(t.getBatches())
+    #print(t.getBatches())

@@ -66,7 +66,7 @@ class dataset:
         self.watson=Config['Bot'].getboolean('watsonMode')
         self.autoencode=Config['Bot'].getboolean('autoEncode')
         dict_temp={};
-        self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
+        self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".pkl"
 #we will save all the values in the dictionary in one go and will save this file
         self.load_data();
         print('Conversation loaded.')
@@ -185,9 +185,9 @@ class dataset:
         path=self.var_corpus_dict;
         #print(path)
         with open(path,'wb') as f:
-            data={'word_id':self.var_word_id,
-                  'id_word':self.var_id_word,
-                  'sample':self.var_sam_train,
+            data={'word2id':self.var_word_id,
+                  'id2word':self.var_id_word,
+                  'trainingSamples':self.var_sam_train,
                   '<pad>':self.var_pad,
                   '<unknown>':self.var_unknown,
                   '<eos>':self.var_eos,
@@ -202,13 +202,13 @@ class dataset:
         try:
             with open(path,"rb") as f:
                 data=pickle.load(f);
-                self.var_word_id=data['word_id'];
-                self.var_id_word=data['id_word'];
-                self.var_sam_train=data['sample']
-                self.var_pad=data['<pad>'];
-                self.var_token=data['<go>'];
-                self.var_eos=data['<eos>'];
-                self.var_unknown=data['<unknown>'];
+                self.var_word_id=data['word2id'];
+                self.var_id_word=data['id2word'];
+                self.var_sam_train=data['trainingSamples']
+                self.var_pad=var_word_id['<pad>'];
+                self.var_token=var_word_id['<go>'];
+                self.var_eos=var_word_id['<eos>'];
+                self.var_unknown=var_word_id['<unknown>'];
         except:
             print("Error in load dataset");
 

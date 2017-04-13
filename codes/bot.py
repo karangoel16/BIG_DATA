@@ -68,6 +68,7 @@ class Bot:
         self.embedding_source = config.get("Bot", "embeddingSource")
         self.model_tag = None
         self.test = config['General'].getboolean('test')
+        print(self.init_embeddings)
 
     def main(self, **kwargs):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
@@ -97,6 +98,8 @@ class Bot:
         self.session.run(tf.global_variables_initializer())
         #print(self.test)
         self.manage_previous_model(self.session)
+        if self.init_embeddings:
+            self.load_embedding(self.session)
         if self.test: 
             self.interactive_main(self.session);
         else:
@@ -236,7 +239,7 @@ class Bot:
 
     def load_embedding(self,session):
         # TODO :- see if we need this load embedding model as of now
-        with tf.variable_scope("embedding_rnn_seq2seq/RNN/EmbeddingWrapper",reuse=True):
+        with tf.variable_scope("embedding_rnn_seq2seq/rnn/embedding_wrapper",reuse=True):
             embedding_in = tf.get_variable("embedding")
         with tf.variable_scope("embedding_rnn_seq2seq/embedding_rnn_decoder",reuse=True):
             embedding_out = tf.get_variable("embedding")
@@ -252,14 +255,15 @@ class Bot:
         # Define new model here #
         # TO DO 406-434#
         embeddings_path = os.path.join('/tmp', self.embedding_source)
+        
         embeddings_format = os.path.splitext(embeddings_path)[1][1:]
         print("Loading pre-trained word embeddings from %s " % embeddings_path)
         with open(embeddings_path, "rb") as f:
             header = f.readline()
             vocab_size, vector_size = map(int, header.split())
             binary_len = np.dtype('float32').itemsize * vector_size
-            initW = np.random.uniform(-0.25,0.25,(len(self.dataset.var_word_id), vector_size))
-            for line in tqdm(range(vocab_size)):
+            initW = np.random.uniform(-0.25,0.25,(len(self.text_data.var_word_id), vector_size))
+            for line in range(vocab_size):
                 word = []
                 while True:
                     ch = f.read(1)
@@ -268,14 +272,14 @@ class Bot:
                         break
                     if ch != b'\n':
                         word.append(ch)
-                if word in self.dataset.var_word_id:
+                if word in self.text_data.var_word_id:
                     if embeddings_format == 'bin':
                         vector = np.fromstring(f.read(binary_len), dtype='float32')
                     elif embeddings_format == 'vec':
                         vector = np.fromstring(f.readline(), sep=' ', dtype='float32')
                     else:
                         raise Exception("Unkown format for embeddings: %s " % embeddings_format)
-                    initW[self.dataset.var_word_id[word]] = vector
+                    initW[self.text_data.var_word_id[word]] = vector
                 else:
                     if embeddings_format == 'bin':
                         f.read(binary_len)
@@ -292,8 +296,8 @@ class Bot:
             initW = np.dot(U[:, :self.embedding_size], S[:self.embedding_size, :self.embedding_size])
 
         # Initialize input and output embeddings
-        sess.run(embedding_in.assign(initW))
-        sess.run(embedding_out.assign(initW))
+        session.run(embedding_in.assign(initW))
+        session.run(embedding_out.assign(initW))
 
     def manage_previous_model(self,session):
         model_name = self._get_model_name()

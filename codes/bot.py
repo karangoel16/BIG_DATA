@@ -65,6 +65,7 @@ class Bot:
         self.embedding_size = int(config.get('Model', 'embeddingSize'))
         self.init_embeddings = config['Bot'].getboolean('initEmbeddings')
         self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
+        self.embedding_source = config.get("Bot", "embeddingSource")
         self.model_tag = None
         self.test = config['General'].getboolean('test')
 
@@ -241,7 +242,7 @@ class Bot:
             embedding_out = tf.get_variable("embedding")
 
         variables = tf.get_collection_ref(tf.GraphKeys.TRAINABLE_VARIABLES)
-        variable.remove(embedding_in)
+        variables.remove(embedding_in)
         variables.remove(embedding_out)
 
         # leave if restoring a model #
@@ -250,6 +251,49 @@ class Bot:
 
         # Define new model here #
         # TO DO 406-434#
+        embeddings_path = os.path.join('/tmp', self.embedding_source)
+        embeddings_format = os.path.splitext(embeddings_path)[1][1:]
+        print("Loading pre-trained word embeddings from %s " % embeddings_path)
+        with open(embeddings_path, "rb") as f:
+            header = f.readline()
+            vocab_size, vector_size = map(int, header.split())
+            binary_len = np.dtype('float32').itemsize * vector_size
+            initW = np.random.uniform(-0.25,0.25,(len(self.dataset.var_word_id), vector_size))
+            for line in tqdm(range(vocab_size)):
+                word = []
+                while True:
+                    ch = f.read(1)
+                    if ch == b' ':
+                        word = b''.join(word).decode('utf-8')
+                        break
+                    if ch != b'\n':
+                        word.append(ch)
+                if word in self.dataset.var_word_id:
+                    if embeddings_format == 'bin':
+                        vector = np.fromstring(f.read(binary_len), dtype='float32')
+                    elif embeddings_format == 'vec':
+                        vector = np.fromstring(f.readline(), sep=' ', dtype='float32')
+                    else:
+                        raise Exception("Unkown format for embeddings: %s " % embeddings_format)
+                    initW[self.dataset.var_word_id[word]] = vector
+                else:
+                    if embeddings_format == 'bin':
+                        f.read(binary_len)
+                    elif embeddings_format == 'vec':
+                        f.readline()
+                    else:
+                        raise Exception("Unkown format for embeddings: %s " % embeddings_format)
+
+        # PCA Decomposition to reduce word2vec dimensionality
+        if self.embedding_size < vector_size:
+            U, s, Vt = np.linalg.svd(initW, full_matrices=False)
+            S = np.zeros((vector_size, vector_size), dtype=complex)
+            S[:vector_size, :vector_size] = np.diag(s)
+            initW = np.dot(U[:, :self.embedding_size], S[:self.embedding_size, :self.embedding_size])
+
+        # Initialize input and output embeddings
+        sess.run(embedding_in.assign(initW))
+        sess.run(embedding_out.assign(initW))
 
     def manage_previous_model(self,session):
         model_name = self._get_model_name()

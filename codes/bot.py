@@ -417,10 +417,10 @@ class Bot:
         return model_name + self.MODEL_EXT
 
     def get_device(self):
-        if self.device == 'cpu':
-            return '/cpu:0'
-        elif self.device == 'gpu':
-            return '/gpu:0'
+        if 'cpu' in self.device:
+            return self.device
+        elif 'gpu' in self.device:
+            return self.device
         elif self.device is None:
             return None
         else:

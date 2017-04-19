@@ -26,7 +26,7 @@ class ubuntu:
                         if f.name.endswith('.tsv'):
                             #now we have to add the code to read the conversation from the file
                             #now we can append in the lines from the loadfunction to the conversation which we can load later
-                            self.conversation.append({"line":self.loadlines(f)});
+                            self.conversation.append({"lines":self.loadlines(f)});
                             if test=="-t":#this is for the test case 
                                 return ;
     #the function has been kept with similar names in all the corpus to keep uniformity

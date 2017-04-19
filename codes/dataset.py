@@ -129,6 +129,7 @@ class dataset:
         return var_word;
     
     def load_data(self):
+        q=[];
         exist_dataset=False;#if the data file does not exist
         if os.path.exists(self.var_corpus_dict):
             exist_dataset=True;
@@ -142,17 +143,21 @@ class dataset:
                         #self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
                         self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
                         #print(self.var_c)
-                        break;  
-            path=self.var_corpus_loc;
-            if self.var_corpus_name=='cornell':
-                t=cornell_data(path);
-            elif self.var_corpus_name=='ubuntu':
-                t=ubuntu(path);
-            elif self.var_corpus_name=='scotus':
-                t=scotus(path);
-            else:
-                print("Not a valid option");
-            self.create_corpus(t.getconversation());
+                        path=self.var_corpus_loc;
+                        if self.var_corpus_name=='cornell':
+                            print('cornell')
+                            t=cornell_data(path);
+                        elif self.var_corpus_name=='ubuntu':
+                            print('ubuntu')
+                            t=ubuntu(path);
+                        elif self.var_corpus_name=='scotus':
+                            print('scotus')
+                            t=scotus(path);
+                        else:
+                            print("Not a valid option");
+                        q.extend(t.getconversation())
+                        #print(t.getconversation())
+            self.create_corpus(q);
             self.save_dataset();
         else:
             #we need to load data set here

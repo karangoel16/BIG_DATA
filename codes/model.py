@@ -109,7 +109,7 @@ class RNNModel:
             self.decoder_weights=[tf.placeholder(tf.float32,[None,],name='weights') for _ in range(self.maxLenDeco)];
             self.decoder_targets  = [tf.placeholder(tf.int32, [None, ],name='targets') for _ in range(self.maxLenDeco)]
 
-            decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_attention_seq2seq(
+            decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
                 self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
                 self.decoder,  # For training, we force the correct output (feed_previous=False)
                 enc_dec_cell,

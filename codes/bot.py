@@ -45,6 +45,7 @@ class Bot:
         self.reset = None
         self.create_dataset = None
         self.device = config.get('General', 'device')
+        self.twitter = config['General'].getboolean('twitter')
 
     def load_config(self):
         #Todo:- Load all the required values from the required configs
@@ -70,7 +71,7 @@ class Bot:
         self.test = config['General'].getboolean('test')
         print(self.init_embeddings)
 
-    def main(self, **kwargs):
+    def main(self):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
         print("SmartGator Intelligent chatbot")
 
@@ -100,7 +101,9 @@ class Bot:
         self.manage_previous_model(self.session)
         if self.init_embeddings:
             self.load_embedding(self.session)
-        if self.test: 
+        if self.twitter:
+            return 
+        elif self.test: 
             self.interactive_main(self.session);
         else:
             self.train_model(self.session)
@@ -225,7 +228,7 @@ class Bot:
         if not answer:
            return 'Out of my scope .. ask something simpler!'
 
-        return ('{}{}'.format(self.SENTENCES_PREFIX[1],self.text_data.sequence2str(answer,cl=True)))
+        return self.text_data.sequence2str(answer,cl=True)
 
     def predict_single(self, question, question_seq=None):
         #print(self.text_data.test_())

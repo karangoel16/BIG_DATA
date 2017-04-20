@@ -70,7 +70,7 @@ class dataset:
         self.watson=Config['Bot'].getboolean('watsonMode')
         self.autoencode=Config['Bot'].getboolean('autoEncode')
         dict_temp={};
-        self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+str(self.vocabularySize)+".pkl"
+        self.var_corpus_dict=self.DirName+"/Database/file_dict"+str(self.choice)+Config.get('Dataset','maxLength')+str(self.vocabularySize)+".pkl"
 #we will save all the values in the dictionary in one go and will save this file
         self.load_data();
         print('Conversation loaded.')
@@ -152,6 +152,7 @@ class dataset:
                             t=cornell_data(path);
                         elif self.var_corpus_name=='ubuntu':
                             print('ubuntu')
+#                            path="/tmp"
                             t=ubuntu(path);
                         elif self.var_corpus_name=='scotus':
                             print('scotus')

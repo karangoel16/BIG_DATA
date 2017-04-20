@@ -211,6 +211,22 @@ class Bot:
 
             print()
 
+    def interactive_main_twitter(self,session,question):
+        #print('Initiating interactive mode .. ')
+        #print('Enter your query or press ENTER to quit!')
+
+        #while True:
+        #    question = input(self.SENTENCES_PREFIX[0])
+        #    if question == '' or question == 'exit':
+        #        break
+
+        question_seq = []
+        answer = self.predict_single(question, question_seq)
+        if not answer:
+           return 'Out of my scope .. ask something simpler!'
+
+        return ('{}{}'.format(self.SENTENCES_PREFIX[1],self.text_data.sequence2str(answer,cl=True)))
+
     def predict_single(self, question, question_seq=None):
         #print(self.text_data.test_())
         batch = self.text_data.sentence2enco(question)

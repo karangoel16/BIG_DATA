@@ -1,4 +1,5 @@
 import tweepy
+import os
 from tweepy.streaming import StreamListener
 from tweepy import Stream
 import csv
@@ -9,9 +10,8 @@ from bot import Bot
 Global declaration of variables
 '''
 Config = cp.ConfigParser()
-DirName='/home/karan/Downloads/GIT_HUB/BIG_DATA/Database/twitter.ini'
-print(DirName)
-Config.read(DirName);
+DirName='/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
+Config.read(os.path.join(DirName,'Database/twitter.ini'));
 C_key=Config.get('Twitter','C_key');
 C_secret=Config.get('Twitter','C_token');
 A_key=Config.get('Twitter','A_key');
@@ -22,6 +22,7 @@ api=tweepy.API(auth);
 class bot_stream(StreamListener):
     def __init__(self):
         t=Bot()
+        print("Bot Ready")
     def post(self,username,tid):
         api.update_status('@'+username+' i am yet to begin answering!!!!',in_reply_to_status_id=tid);
     def on_data(self,data):

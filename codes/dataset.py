@@ -182,7 +182,7 @@ class dataset:
     def word_id(self,word,add=True):
         word=word.lower();#to convert word into the lower charachter of word
         if not add:
-            wordId = self.word2id.get(word, self.var_unknown)
+            wordId = self.var_word_id.get(word, self.var_unknown)
         # Get the id if the word already exist
         elif word in self.var_word_id:
             wordId = self.var_word_id[word]

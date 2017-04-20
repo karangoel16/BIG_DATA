@@ -93,34 +93,34 @@ class RNNModel:
                         self.textdata.vocab_size()),
                     self.dtype)
 
-        enc_dec_cell = tf.contrib.rnn.BasicLSTMCell(self.hiddenSize,
+        with tf.device('/cpu:0'):
+            enc_dec_cell = tf.contrib.rnn.BasicLSTMCell(self.hiddenSize,
                                                     state_is_tuple=True)
-        if not self.test:  # TODO: Should use a placeholder instead
-            enc_dec_cell = tf.contrib.rnn.DropoutWrapper(enc_dec_cell,
+            if not self.test:  # TODO: Should use a placeholder instead
+                enc_dec_cell = tf.contrib.rnn.DropoutWrapper(enc_dec_cell,
                                                          input_keep_prob=1.0,
                                                          output_keep_prob=self.dropout)
-        enc_dec_cell = tf.contrib.rnn.MultiRNNCell([enc_dec_cell] * self.numLayers,state_is_tuple=True)
+            enc_dec_cell = tf.contrib.rnn.MultiRNNCell([enc_dec_cell] * self.numLayers,state_is_tuple=True)
 
-        with tf.name_scope('placeholder_encoder'):
             self.encoder  = [tf.placeholder(tf.int32, [None, ]) for _ in range(self.maxLenEnco)]
 
-        with tf.name_scope('placeholder_decoder'):
             #TODO:- check if operation name is not necessary for placeholders
             self.decoder  = [tf.placeholder(tf.int32,[None, ],name='inputs') for _ in range(self.maxLenDeco)]
             self.decoder_weights=[tf.placeholder(tf.float32,[None,],name='weights') for _ in range(self.maxLenDeco)];
             self.decoder_targets  = [tf.placeholder(tf.int32, [None, ],name='targets') for _ in range(self.maxLenDeco)]
 
-        decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
-            self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
-            self.decoder,  # For training, we force the correct output (feed_previous=False)
-            enc_dec_cell,
-            self.textdata.vocab_size(),
-            self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
-            embedding_size=self.embeddingSize,  # Dimension of each word
-            output_projection=outputProjection.getWeights() if outputProjection else None,
-            feed_previous=bool(self.test)
-            )
+            decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_attention_seq2seq(
+                self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
+                self.decoder,  # For training, we force the correct output (feed_previous=False)
+                enc_dec_cell,
+                self.textdata.vocab_size(),
+                self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
+                embedding_size=self.embeddingSize,  # Dimension of each word
+                output_projection=outputProjection.getWeights() if outputProjection else None,
+                feed_previous=bool(self.test)
+                )
         #print(self.test)
+
         if self.test:
             #print(decoder_outputs)
             if not outputProjection:
@@ -130,22 +130,23 @@ class RNNModel:
         
         else:
             #this is when we are not testing on our model but train our system
-            self.loss_fct = tf.contrib.legacy_seq2seq.sequence_loss(
-                decoder_outputs,
-                self.decoder_targets,
-                self.decoder_weights,
-                self.textdata.vocab_size(),
-                softmax_loss_function= sampledSoftmax if outputProjection else None
-            )
-            tf.summary.scalar('loss', self.loss_fct)
+            with tf.device('/gpu:0'):
+                self.loss_fct = tf.contrib.legacy_seq2seq.sequence_loss(
+                    decoder_outputs,
+                    self.decoder_targets,
+                    self.decoder_weights,
+                    self.textdata.vocab_size(),
+                    softmax_loss_function= sampledSoftmax if outputProjection else None
+                )
+                tf.summary.scalar('loss', self.loss_fct)
 
-            opt = tf.train.AdamOptimizer(
-                learning_rate=self.learningRate,
-                beta1=0.9,
-                beta2=0.999,
-                epsilon=1e-08
-            )
-            self.opt_op = opt.minimize(self.loss_fct);
+                opt = tf.train.AdamOptimizer(
+                    learning_rate=self.learningRate,
+                    beta1=0.9,
+                    beta2=0.999,
+                    epsilon=1e-08
+                )
+                self.opt_op = opt.minimize(self.loss_fct);
 
     def step(self, batch):
         feed_dict = {}

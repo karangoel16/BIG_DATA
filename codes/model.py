@@ -93,7 +93,7 @@ class RNNModel:
                         self.textdata.vocab_size()),
                     self.dtype)
 
-        with tf.device('/cpu:0'):
+        with tf.device('/gpu:0'):
             enc_dec_cell = tf.contrib.rnn.BasicLSTMCell(self.hiddenSize,
                                                     state_is_tuple=True)
             if not self.test:  # TODO: Should use a placeholder instead

@@ -7,6 +7,7 @@ import configparser as cp
 from cornell import cornell_data
 from scotus import scotus
 from ubuntu import ubuntu
+from opensub import OpensubsData
 import numpy as np
 
 class batch:
@@ -149,6 +150,8 @@ class dataset:
                 t=ubuntu(path);
             elif self.var_corpus_name=='scotus':
                 t=scotus(path);
+            elif self.var_corpus_name=='open':
+                t=OpensubsData(path);
             else:
                 print("Not a valid option");
             self.create_corpus(t.getconversation());

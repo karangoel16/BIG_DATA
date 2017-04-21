@@ -45,11 +45,13 @@ class Bot:
         self.reset = None
         self.create_dataset = None
         self.device = config.get('General', 'device')
+        self.twitter = config['General'].getboolean('twitter')
 
     def load_config(self):
         #Todo:- Load all the required values from the required configs
         self.keep_all = config['General'].getboolean('keepall')
         self.epochs = int(config.get('General', 'epochs'))
+        self.current_epoch = 0
         self.learning_rate =float(config.get('Model', 'learningRate'))
         self.save_ckpt_at = int(config.get('General', 'saveCkptAt'))
         self.batch_size = int(config.get('General', 'batchSize'))
@@ -64,19 +66,20 @@ class Bot:
         self.embedding_size = int(config.get('Model', 'embeddingSize'))
         self.init_embeddings = config['Bot'].getboolean('initEmbeddings')
         self.softmax_samples = int(config.get('Model', 'softmaxSamples'))
+        self.embedding_source = config.get("Bot", "embeddingSource")
         self.model_tag = None
         self.test = config['General'].getboolean('test')
+        print(self.init_embeddings)
 
-    def main(self, **kwargs):
+    def main(self):
         #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
         print("SmartGator Intelligent chatbot")
 
-        self.root_dir = os.getcwd()
-
-        self.load_model_params()
+        self.root_dir = os.getcwd() 
 
         #self.text_data = dataset()
         self.load_config()
+        self.load_model_params()
 
         print(self.text_data)
         with tf.device(self.get_device()):
@@ -95,8 +98,12 @@ class Bot:
         print("Initializing tf variables")
         self.session.run(tf.global_variables_initializer())
         #print(self.test)
-        if self.test:
-            self.manage_previous_model(self.session)
+        self.manage_previous_model(self.session)
+        if self.init_embeddings:
+            self.load_embedding(self.session)
+        if self.twitter:
+            return 
+        elif self.test: 
             self.interactive_main(self.session);
         else:
             self.train_model(self.session)
@@ -115,7 +122,10 @@ class Bot:
         print('Training begining (press Ctrl+C to save and exit)...')
 
         try:
-            for epoch in range(self.epochs):
+            if self.current_epoch == self.epochs:
+                #TODO: User input if neccessary
+                return
+            for epoch in range(self.current_epoch, self.epochs):
                 print(
                       "\n----- Epoch {}/{} ; (lr={}) -----".format(
                         epoch+1,
@@ -124,6 +134,7 @@ class Bot:
                         )
                       )
                 batches = self.text_data.getBatches()
+                local_step = 0
 
                 for curr_batch in batches:
                     ops, feed_dict = self.model.step(curr_batch)
@@ -131,15 +142,17 @@ class Bot:
                     _, loss, summary = session.run(ops + tuple([merged_summaries]), feed_dict)
                     self.writer.add_summary(summary, self.global_step)
                     self.global_step += 1
+                    local_step += 1
 
                     if self.global_step % 100 == 0:
                         perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                        print("----- Step %d -- Loss %.2f -- Perplexity %.2f" % (self.global_step, loss, perplexity))
+                        print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep %d" %  (local_step, len(batches), loss, perplexity, self.global_step))
+
 
                     #Save checkpoint
                     if self.global_step % self.save_ckpt_at == 0:
                         self._save_session(session)
-
+                self.current_epoch += 1
         except (KeyboardInterrupt, SystemExit):
             print("Saving state and Exiting the program")
 
@@ -201,6 +214,22 @@ class Bot:
 
             print()
 
+    def interactive_main_twitter(self,session,question):
+        #print('Initiating interactive mode .. ')
+        #print('Enter your query or press ENTER to quit!')
+
+        #while True:
+        #    question = input(self.SENTENCES_PREFIX[0])
+        #    if question == '' or question == 'exit':
+        #        break
+
+        question_seq = []
+        answer = self.predict_single(question, question_seq)
+        if not answer:
+           return 'Out of my scope .. ask something simpler!'
+
+        return self.text_data.sequence2str(answer,cl=True)
+
     def predict_single(self, question, question_seq=None):
         #print(self.text_data.test_())
         batch = self.text_data.sentence2enco(question)
@@ -229,13 +258,13 @@ class Bot:
 
     def load_embedding(self,session):
         # TODO :- see if we need this load embedding model as of now
-        with tf.variable_scope("embedding_rnn_seq2seq/RNN/EmbeddingWrapper",reuse=True):
+        with tf.variable_scope("embedding_rnn_seq2seq/rnn/embedding_wrapper",reuse=True):
             embedding_in = tf.get_variable("embedding")
         with tf.variable_scope("embedding_rnn_seq2seq/embedding_rnn_decoder",reuse=True):
             embedding_out = tf.get_variable("embedding")
 
         variables = tf.get_collection_ref(tf.GraphKeys.TRAINABLE_VARIABLES)
-        variable.remove(embedding_in)
+        variables.remove(embedding_in)
         variables.remove(embedding_out)
 
         # leave if restoring a model #
@@ -244,6 +273,50 @@ class Bot:
 
         # Define new model here #
         # TO DO 406-434#
+        embeddings_path = os.path.join('/tmp', self.embedding_source)
+        
+        embeddings_format = os.path.splitext(embeddings_path)[1][1:]
+        print("Loading pre-trained word embeddings from %s " % embeddings_path)
+        with open(embeddings_path, "rb") as f:
+            header = f.readline()
+            vocab_size, vector_size = map(int, header.split())
+            binary_len = np.dtype('float32').itemsize * vector_size
+            initW = np.random.uniform(-0.25,0.25,(len(self.text_data.var_word_id), vector_size))
+            for line in range(vocab_size):
+                word = []
+                while True:
+                    ch = f.read(1)
+                    if ch == b' ':
+                        word = b''.join(word).decode('utf-8')
+                        break
+                    if ch != b'\n':
+                        word.append(ch)
+                if word in self.text_data.var_word_id:
+                    if embeddings_format == 'bin':
+                        vector = np.fromstring(f.read(binary_len), dtype='float32')
+                    elif embeddings_format == 'vec':
+                        vector = np.fromstring(f.readline(), sep=' ', dtype='float32')
+                    else:
+                        raise Exception("Unkown format for embeddings: %s " % embeddings_format)
+                    initW[self.text_data.var_word_id[word]] = vector
+                else:
+                    if embeddings_format == 'bin':
+                        f.read(binary_len)
+                    elif embeddings_format == 'vec':
+                        f.readline()
+                    else:
+                        raise Exception("Unkown format for embeddings: %s " % embeddings_format)
+
+        # PCA Decomposition to reduce word2vec dimensionality
+        if self.embedding_size < vector_size:
+            U, s, Vt = np.linalg.svd(initW, full_matrices=False)
+            S = np.zeros((vector_size, vector_size), dtype=complex)
+            S[:vector_size, :vector_size] = np.diag(s)
+            initW = np.dot(U[:, :self.embedding_size], S[:self.embedding_size, :self.embedding_size])
+
+        # Initialize input and output embeddings
+        session.run(embedding_in.assign(initW))
+        session.run(embedding_out.assign(initW))
 
     def manage_previous_model(self,session):
         model_name = self._get_model_name()
@@ -305,7 +378,7 @@ class Bot:
             self.embedding_size = config['Network'].getint('embedding_size')
             self.init_embeddings = config['Network'].getboolean('init_embeddings')
             self.softmax_samples = config['Network'].getint('softmax_samples')
-
+            self.current_epoch = config['General'].getint('epoch')
             # Print the restored params
             print()
             print('Warning: Restoring parameters:')
@@ -320,6 +393,7 @@ class Bot:
             print('embeddingSize: {}'.format(self.embedding_size))
             print('initEmbeddings: {}'.format(self.init_embeddings))
             print('softmaxSamples: {}'.format(self.softmax_samples))
+            print('current_epoch: {}'.format(self.current_epoch))
             print()
 
     def save_model_params(self):
@@ -331,7 +405,8 @@ class Bot:
             "watson_mode": str(self.watson_mode),
             "auto_encode":  str(self.auto_encode),
             "corpus": self.corpus,
-            "dataset_tag": self.dataset_tag  
+            "dataset_tag": self.dataset_tag,
+            "epoch": self.current_epoch
         }
         config["General"] = general
         network = {
@@ -361,10 +436,10 @@ class Bot:
         return model_name + self.MODEL_EXT
 
     def get_device(self):
-        if self.device == 'cpu':
-            return '/cpu:0'
-        elif self.device == 'gpu':
-            return '/gpu:0'
+        if 'cpu' in self.device:
+            return self.device
+        elif 'gpu' in self.device:
+            return self.device
         elif self.device is None:
             return None
         else:

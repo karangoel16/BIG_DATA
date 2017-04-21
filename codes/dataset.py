@@ -8,6 +8,7 @@ from cornell import cornell_data
 from scotus import scotus
 from ubuntu import ubuntu
 from opensub import OpensubsData
+import collections
 import numpy as np
 
 class batch:
@@ -58,8 +59,11 @@ class dataset:
         self.var_unknown=-1;
         self.var_token=-1;
         self.var_sam_train=[];
+        self.vocabularySize=int(Config.get('General','Vsize'))#this is for the size of the vocab
+        self.filterVocab = int(Config.get('General','Fvocab'))
         self.var_word_id={};#this is to compute the number to word
         self.var_id_word={};#this is to compute the word to number
+        self.idCount={}
         self.var_max_length=int(Config.get('Dataset','maxLength'));
         self.maxLenEnco=self.var_max_length;
         self.maxLenDeco=self.maxLenEnco+2;
@@ -67,7 +71,7 @@ class dataset:
         self.watson=Config['Bot'].getboolean('watsonMode')
         self.autoencode=Config['Bot'].getboolean('autoEncode')
         dict_temp={};
-        self.var_corpus_dict=self.DirName+"/Database/file_dict"+Config.get('Dataset','maxLength')+".p"
+        self.var_corpus_dict=self.DirName+"/Database/file_dict"+str(self.choice)+Config.get('Dataset','maxLength')+str(self.vocabularySize)+".pkl"
 #we will save all the values in the dictionary in one go and will save this file
         self.load_data();
         print('Conversation loaded.')
@@ -129,6 +133,7 @@ class dataset:
         return var_word;
     
     def load_data(self):
+        q=[];
         exist_dataset=False;#if the data file does not exist
         if os.path.exists(self.var_corpus_dict):
             exist_dataset=True;
@@ -141,60 +146,65 @@ class dataset:
                         self.var_corpus_name=dict_temp['CorpusName'];
                         #self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
                         self.var_corpus_loc=self.DirName+dict_temp['Corpus Unique Path'];
-                        print(self.var_c)
-                        break;  
-            path=self.var_corpus_loc;
-            if self.var_corpus_name=='cornell':
-                t=cornell_data(path);
-            elif self.var_corpus_name=='ubuntu':
-                t=ubuntu(path);
-            elif self.var_corpus_name=='scotus':
-                t=scotus(path);
-            elif self.var_corpus_name=='open':
-                t=OpensubsData(path);
-            else:
-                print("Not a valid option");
-            self.create_corpus(t.getconversation());
+                        #print(self.var_c)
+                        path=self.var_corpus_loc;
+                        if self.var_corpus_name=='cornell':
+                            print('cornell')
+                            t=cornell_data(path);
+                        elif self.var_corpus_name=='ubuntu':
+                            print('ubuntu')
+#                            path="/tmp"
+                            t=ubuntu(path);
+                        elif self.var_corpus_name=='scotus':
+                            print('scotus')
+                            t=scotus(path);
+                        else:
+                            print("Not a valid option");
+                        q.extend(t.getconversation())
+                        #print(t.getconversation())
+            self.create_corpus(q);
+            #this is to filter the sentences and keywords so that we can reduce the vocab size
+            self.filterFromFull()
             self.save_dataset();
         else:
             #we need to load data set here
             self.load_dataset();#this is place where we will load the dataset
-            
+        assert self.var_pad == 0    
             
     def create_corpus(self,conversations):
         self.var_pad = self.word_id('<pad>')  # Padding (Warning: first things to add > id=0 !!)
         self.var_token = self.word_id('<go>')  # Start of sequence
         self.var_eos = self.word_id('<eos>')  # End of sequence
         self.var_unknown = self.word_id('<unknown>')  # Word dropped from vocabulary
+        #print(self.var_pad)
         for conversation in conversations:
             self.conv_set(conversation);
             
             
     def word_id(self,word,add=True):
-        word=word.lower();#to convert word into the lower charachter of words
-        if word in self.var_word_id:
-            return self.var_word_id[word];
+        word=word.lower();#to convert word into the lower charachter of word
+        if not add:
+            wordId = self.var_word_id.get(word, self.var_unknown)
+        # Get the id if the word already exist
+        elif word in self.var_word_id:
+            wordId = self.var_word_id[word]
+            self.idCount[wordId] += 1
+        # If not, we create a new entry
         else:
-            if add:
-                word_len=len(self.var_word_id);
-                self.var_word_id[word]=word_len;#this is to add the dictionary of the word in the list to encode
-                self.var_id_word[word_len]=word;#this is to add the dictionary of the word to decode
-            else:
-                self.var_word_id[word]=self.var_unknown;
-                word_len=self.var_unknown;
-        return word_len;#this is to add the word back into the dictionary
-
+            wordId = len(self.var_word_id)
+            self.var_word_id[word] = wordId
+            self.var_id_word[wordId] = word
+            self.idCount[wordId] = 1
+#this is to add the word back into the dictionary
+        return wordId;
     def save_dataset(self):
         path=self.var_corpus_dict;
         #print(path)
         with open(path,'wb') as f:
-            data={'word_id':self.var_word_id,
-                  'id_word':self.var_id_word,
-                  'sample':self.var_sam_train,
-                  '<pad>':self.var_pad,
-                  '<unknown>':self.var_unknown,
-                  '<eos>':self.var_eos,
-                  '<go>':self.var_token
+            data={'word2id':self.var_word_id,
+                  'id2word':self.var_id_word,
+                  'idCount':self.idCount,
+                  'trainingSamples':self.var_sam_train,
                  };
             pickle.dump(data,f,-1);
         #except:
@@ -205,18 +215,117 @@ class dataset:
         try:
             with open(path,"rb") as f:
                 data=pickle.load(f);
-                self.var_word_id=data['word_id'];
-                self.var_id_word=data['id_word'];
-                self.var_sam_train=data['sample']
-                self.var_pad=data['<pad>'];
-                self.var_token=data['<go>'];
-                self.var_eos=data['<eos>'];
-                self.var_unknown=data['<unknown>'];
+                self.var_word_id=data['word2id'];
+                self.var_id_word=data['id2word'];
+                self.idCount=data.get('idCount',None);
+                self.var_sam_train=data['trainingSamples']
+                self.var_pad=self.var_word_id['<pad>'];
+                self.var_token=self.var_word_id['<go>'];
+                self.var_eos=self.var_word_id['<eos>'];
+                self.var_unknown=self.var_word_id['<unknown>'];  
         except:
             print("Error in load dataset");
 
 #def sent2enco(self,sent):
-        
+    def filterFromFull(self):
+        """ Load the pre-processed full corpus and filter the vocabulary / sentences
+        to match the given model options
+        """
+
+        def mergeSentences(sentences, fromEnd=False):
+            """Merge the sentences until the max sentence length is reached
+            Also decrement id count for unused sentences.
+            Args:
+                sentences (list<list<int>>): the list of sentences for the current line
+                fromEnd (bool): Define the question on the answer
+            Return:
+                list<int>: the list of the word ids of the sentence
+            """
+            # We add sentence by sentence until we reach the maximum length
+            merged = []
+
+            # If question: we only keep the last sentences
+            # If answer: we only keep the first sentences
+            if fromEnd:
+                sentences = reversed(sentences)
+            for sentence in sentences:
+                #print(sentence)
+                # If the total length is not too big, we still can add one more sentence
+                if len(merged) + 1  <= self.var_max_length: #TOD:check change here
+                    if fromEnd:  # Append the sentence
+                        merged = [sentence] + merged
+                    else:
+                        merged = merged + [sentence]
+                else:  # If the sentence is not used, neither are the words
+                    for w in sentence:
+                        self.idCount[w] -= 1
+            return merged
+
+        newSamples = []
+
+        # 1st step: Iterate over all words and add filters the sentences
+        # according to the sentence lengths
+        for inputWords, targetWords in self.var_sam_train:
+            #print(inputWords)
+            #print(targetWords)
+            inputWords = mergeSentences(inputWords, fromEnd=True)
+            targetWords = mergeSentences(targetWords, fromEnd=False)
+
+            newSamples.append([inputWords, targetWords])
+        words = []
+
+
+        # 2nd step: filter the unused words and replace them by the unknown token
+        # This is also where we update the correnspondance dictionaries
+        specialTokens = {  # TODO: bad HACK to filter the special tokens. Error prone if one day add new special tokens
+            self.var_pad,
+            self.var_token,
+            self.var_eos,
+            self.var_unknown
+        }
+        newMapping = {}  # Map the full words ids to the new one (TODO: Should be a list)
+        newId = 0
+        print(self.vocabularySize)
+        selectedWordIds = collections \
+            .Counter(self.idCount) \
+            .most_common(self.vocabularySize or None)  # Keep all if vocabularySize == 0
+        selectedWordIds = {k for k, v in selectedWordIds if v > self.filterVocab}
+        selectedWordIds |= specialTokens
+
+        for wordId, count in [(i, self.idCount[i]) for i in range(len(self.idCount))]:  # Iterate in order
+            if wordId in selectedWordIds:  # Update the word id
+                newMapping[wordId] = newId
+                word = self.var_id_word[wordId]  # The new id has changed, update the dictionaries
+                del self.var_id_word[wordId]  # Will be recreated if newId == wordId
+                self.var_word_id[word] = newId
+                self.var_id_word[newId] = word
+                newId += 1
+            else:  # Cadidate to filtering, map it to unknownToken (Warning: don't filter special token)
+                newMapping[wordId] = self.var_unknown
+                del self.var_word_id[self.var_id_word[wordId]]  # The word isn't used anymore
+                del self.var_id_word[wordId]
+
+        # Last step: replace old ids by new ones and filters empty sentences
+        def replace_words(words):
+            valid = False  # Filter empty sequences
+            for i, w in enumerate(words):
+                words[i] = newMapping[w]
+                if words[i] != self.var_unknown:  # Also filter if only contains unknown tokens
+                    valid = True
+            return valid
+
+        self.var_sam_train.clear()
+
+        for inputWords, targetWords in newSamples:
+            valid = True
+            valid &= replace_words(inputWords)
+            valid &= replace_words(targetWords)
+            valid &= targetWords.count(self.var_unknown) == 0  # Filter target with out-of-vocabulary target words ?
+
+            if valid:
+                self.var_sam_train.append([inputWords, targetWords])  # TODO: Could replace list by tuple
+
+        self.idCount.clear()  # Not usefull anymore. Free data   
 #This program is to return all values to the chatbot where it will call again
     def id_seq(self,var_dec):
         var_seq=[];
@@ -276,7 +385,7 @@ class dataset:
             assert len(var_batch.var_encoder[i])<=self.maxLenEnco
             assert len(var_batch.var_decoder[i])<=self.maxLenDeco
             var_batch.var_encoder[i] = [self.var_pad]*(self.maxLenEnco-len(var_batch.var_encoder[i]))+var_batch.var_encoder[i]
-            var_batch.var_decoder[i] = [self.var_pad]*(self.maxLenDeco-len(var_batch.var_decoder[i]))+var_batch.var_decoder[i]
+            var_batch.var_decoder[i] = var_batch.var_decoder[i]+[self.var_pad]*(self.maxLenDeco-len(var_batch.var_decoder[i]))
             var_batch.var_target[i]=var_batch.var_target[i] +[self.var_pad]*(self.maxLenDeco-len(var_batch.var_target[i]))
             var_batch.var_weight.append([1.0]*len(var_batch.var_target[i]+[0.0]*(self.maxLenDeco-len(var_batch.var_target[i]))))
             ##need to write more code here
@@ -316,7 +425,6 @@ class dataset:
             list<Batch>: Get a list of the batches for the next epoch
         """
         random.shuffle(self.var_sam_train);
-
         batches = []
 
         def genNextSamples():
@@ -353,4 +461,4 @@ class dataset:
         return var_sequence;
 if __name__ == "__main__":        
     t=dataset();#we have to enter the path Name    
-    print(t.getBatches())
+    print(t.vocab_size())

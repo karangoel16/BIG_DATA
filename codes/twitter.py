@@ -39,9 +39,11 @@ class bot_handler:
     def __init__(self):
         self.l=bot_stream()
         try:
+        	api.update_status("Listening to the queries")
             stream = tweepy.Stream(auth, self.l)
             stream.filter(track=['@SmartGatorAI'])
         except KeyboardInterrupt:
+        	api.update_status("Going to sleep")
             print('closing session')
             self.l.t.session.close()
 if __name__=="__main__":

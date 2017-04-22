@@ -62,7 +62,7 @@ class RNNModel:
         self.maxLenDeco = self.maxLenEnco + 2 #Todo: will see if it needs to be in config
         self.embeddingSize = int(config.get('Model', 'embeddingSize'))
         self.learningRate = float(config.get('Model', 'learningRate'))
-        self.attention = condig['Bot'].getboolean('attention')
+        self.attention = config['Bot'].getboolean('attention')
         self.build_network()           #this is done to compute the graph
 
     def build_network(self):
@@ -111,6 +111,7 @@ class RNNModel:
             self.decoder_targets  = [tf.placeholder(tf.int32, [None, ],name='targets') for _ in range(self.maxLenDeco)]
 
             if self.attention:
+                print("running attention mechanism")
                 decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_attention_seq2seq(
                     self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
                     self.decoder,  # For training, we force the correct output (feed_previous=False)
@@ -122,6 +123,7 @@ class RNNModel:
                     feed_previous=bool(self.test)
                     )
             else:
+                print("Running rnn seq-2-seq")
                 decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
                     self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
                     self.decoder,  # For training, we force the correct output (feed_previous=False)

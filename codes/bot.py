@@ -123,12 +123,15 @@ class Bot:
 
         print('Training begining (press Ctrl+C to save and exit)...')
         csv_name = self.root_dir + self._get_csv_name()
+        print("Will be writing data to:", csv_name)
         with open(csv_name, "a") as f:
+            print("opened th csv file")
             wr = csv.writer(f, quoting=csv.QUOTE_ALL)
             row_data = []
             try:
                 if self.current_epoch == self.epochs:
                     #TODO: User input if neccessary
+                    print("Current epoch is same as total required epochs")
                     return
 
                     #wr.writerow(["global_step", "epoch", "loss", "perplexity"])
@@ -174,11 +177,11 @@ class Bot:
 
     def _get_csv_name(self):
         if self.init_embeddings:
-            return "/codes/data_tokenizer.csv"
+            return "/data_tokenizer.csv"
         elif self.attention:
-            return "/codes/data_attention.csv"
+            return "/data_attention.csv"
         else:
-            return "/codes/data_word2vec.csv"
+            return "/data_word2vec.csv"
 
     def predict_test_set(self, session):
         with open(os.path.join(self.root_dir, self.TEST_IN_NAME), 'r') as f:

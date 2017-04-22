@@ -177,11 +177,11 @@ class Bot:
 
     def _get_csv_name(self):
         if self.init_embeddings:
-            return "/data_tokenizer.csv"
+            return "/data_word2vec.csv"
         elif self.attention:
             return "/data_attention.csv"
         else:
-            return "/data_word2vec.csv"
+            return "/data_tokenizer.csv"
 
     def predict_test_set(self, session):
         with open(os.path.join(self.root_dir, self.TEST_IN_NAME), 'r') as f:

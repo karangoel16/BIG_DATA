@@ -44,12 +44,13 @@ class OpensubsData:
         conversations = []
         dirList = self.filesInDir(dirName)
         for filepath in dirList:
+            #print(filepath)
             if filepath.endswith('gz'):
                 try:
                     doc = self.getXML(filepath)
                     conversations.extend(self.genList(doc))
                 except ValueError:
-                    tqdm.write("Skipping file %s with errors." % filepath)
+                    print("Skipping file %s with errors." % filepath)
                 except:
                     print("Unexpected error:", sys.exc_info()[0])
                     raise
@@ -130,3 +131,6 @@ class OpensubsData:
                 fname = os.path.join(dirpath, filename)
                 result.append(fname)
         return result
+if __name__=="__main__":
+    t=OpensubsData('/cise/homes/kgoel/Downloads/BIG_DATA/Corpus/opensb')
+    print(t.getconversation())

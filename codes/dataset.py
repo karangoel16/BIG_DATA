@@ -141,7 +141,7 @@ class dataset:
             with open((self.DirName+"/Database/CorpusData.csv")) as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    if reader.line_num==(self.choice+1) or self.choice==4:
+                    if reader.line_num==(self.choice+1) or self.choice==5:
                         dict_temp=row;
                         self.var_corpus_name=dict_temp['CorpusName'];
                         #self.var_corpus_dict=self.DirName+dict_temp['Dictionary_Add'];
@@ -158,6 +158,9 @@ class dataset:
                         elif self.var_corpus_name=='scotus':
                             print('scotus')
                             t=scotus(path);
+                        elif self.var_corpus_name=='open':
+                            print('open subtitle')
+                            t=OpensubsData(path);
                         else:
                             print("Not a valid option");
                         q.extend(t.getconversation())

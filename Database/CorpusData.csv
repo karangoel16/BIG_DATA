@@ -2,3 +2,4 @@ Sr. No.,CorpusName,Corpus Unique Path,Dictionary_Add
 1,ubuntu,/Corpus/ubuntu/,/Database/ubuntu
 2,scotus,/Corpus/SCOTUS/,/Database/scotus
 3,cornell,/Corpus/Cornel/,/Database/cornel.p
+4,open,/Corpus/opensb/,/Database/cornel.p

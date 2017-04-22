@@ -86,14 +86,16 @@ class OpensubsData:
                         pass
 
         conversations = []
-        for idx in range(0, len(sentList) - 1):
+        for idx in range(0, len(sentList)-2):
             cur = sentList[idx]
             nxt = sentList[idx + 1]
-            if nxt[1] - cur[2] <= maxDelta and cur and nxt:
+            nxt_1 = sentList[idx + 2]
+            if nxt_1[1] - cur[2] <= maxDelta  and cur and nxt and nxt_1:
                 tmp = {}
                 tmp["lines"] = []
                 tmp["lines"].append(self.getLine(cur[0]))
                 tmp["lines"].append(self.getLine(nxt[0]))
+                tmp["lines"].append(self.getLine(nxt_1[0]))
                 if self.filter(tmp):
                     conversations.append(tmp)
 
@@ -132,5 +134,5 @@ class OpensubsData:
                 result.append(fname)
         return result
 if __name__=="__main__":
-    t=OpensubsData('/cise/homes/kgoel/Downloads/BIG_DATA/Corpus/opensb')
+    t=OpensubsData('/home/karan/Downloads/GIT_HUB/BIG_DATA/Corpus/opensb')
     print(t.getconversation())

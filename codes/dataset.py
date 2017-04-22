@@ -83,19 +83,19 @@ class dataset:
         '''
             here we extract the lines and then from lines gives token to the sentence which are correct 
         '''
-        for i in range(len(conversation["lines"])-1):
+        for i in range(len(conversation["lines"])-2):
             #print(i);
             #print(conversation["lines"][i])
             var_user_1=conversation["lines"][i];#this is for user 1
-            
-            var_user_2=conversation["lines"][i+1];#this is for user 2
+            var_user_3=conversation["lines"][i+1]
+            var_user_2=conversation["lines"][i+2];#this is for user 2
             
             var_user_1_word=self.token_(var_user_1["text"]);
-            
+            var_user_3_word=self.token_(var_user_3["text"]);
             var_user_2_word=self.token_(var_user_2["text"],True);
-            if var_user_1_word and var_user_2_word:
+            if var_user_1_word and var_user_2_word and var_user_3:
                 #we will call the functions from here , we have checked that the conversation going on is legitimite
-                self.var_sam_train.append([var_user_1_word,var_user_2_word]);
+                self.var_sam_train.append([var_user_1_word,var_user_3_word,var_user_2_word]);
                 #print(var_user_1_word)
                 #print(self.sequence2str(var_user_1_word))
             
@@ -268,13 +268,14 @@ class dataset:
 
         # 1st step: Iterate over all words and add filters the sentences
         # according to the sentence lengths
-        for inputWords, targetWords in self.var_sam_train:
+        for inputWords,middleWords, targetWords in self.var_sam_train:
             #print(inputWords)
             #print(targetWords)
             inputWords = mergeSentences(inputWords, fromEnd=True)
+            middleWords= mergeSentences(inputWords,fromEnd=True)
             targetWords = mergeSentences(targetWords, fromEnd=False)
 
-            newSamples.append([inputWords, targetWords])
+            newSamples.append([inputWords+middleWords, targetWords])
         words = []
 
 
@@ -385,7 +386,7 @@ class dataset:
             #print(len(var_batch.var_decoder[i]))
             #print(self.var_max_length)
             var_batch.var_target.append(var_batch.var_decoder[-1][1:])
-            assert len(var_batch.var_encoder[i])<=self.maxLenEnco
+            assert len(var_batch.var_encoder[i])<=self.maxLenEnco+self.maxLenDeco
             assert len(var_batch.var_decoder[i])<=self.maxLenDeco
             var_batch.var_encoder[i] = [self.var_pad]*(self.maxLenEnco-len(var_batch.var_encoder[i]))+var_batch.var_encoder[i]
             var_batch.var_decoder[i] = var_batch.var_decoder[i]+[self.var_pad]*(self.maxLenDeco-len(var_batch.var_decoder[i]))

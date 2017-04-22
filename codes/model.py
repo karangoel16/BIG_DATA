@@ -62,6 +62,7 @@ class RNNModel:
         self.maxLenDeco = self.maxLenEnco + 2 #Todo: will see if it needs to be in config
         self.embeddingSize = int(config.get('Model', 'embeddingSize'))
         self.learningRate = float(config.get('Model', 'learningRate'))
+        self.attention = condig['Bot'].getboolean('attention')
         self.build_network()           #this is done to compute the graph
 
     def build_network(self):
@@ -109,16 +110,28 @@ class RNNModel:
             self.decoder_weights=[tf.placeholder(tf.float32,[None,],name='weights') for _ in range(self.maxLenDeco)];
             self.decoder_targets  = [tf.placeholder(tf.int32, [None, ],name='targets') for _ in range(self.maxLenDeco)]
 
-            decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
-                self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
-                self.decoder,  # For training, we force the correct output (feed_previous=False)
-                enc_dec_cell,
-                self.textdata.vocab_size(),
-                self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
-                embedding_size=self.embeddingSize,  # Dimension of each word
-                output_projection=outputProjection.getWeights() if outputProjection else None,
-                feed_previous=bool(self.test)
-                )
+            if self.attention:
+                decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_attention_seq2seq(
+                    self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
+                    self.decoder,  # For training, we force the correct output (feed_previous=False)
+                    enc_dec_cell,
+                    self.textdata.vocab_size(),
+                    self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
+                    embedding_size=self.embeddingSize,  # Dimension of each word
+                    output_projection=outputProjection.getWeights() if outputProjection else None,
+                    feed_previous=bool(self.test)
+                    )
+            else:
+                decoder_outputs, states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
+                    self.encoder,  # List<[batch=?, inputDim=1]>, list of size args.maxLength
+                    self.decoder,  # For training, we force the correct output (feed_previous=False)
+                    enc_dec_cell,
+                    self.textdata.vocab_size(),
+                    self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
+                    embedding_size=self.embeddingSize,  # Dimension of each word
+                    output_projection=outputProjection.getWeights() if outputProjection else None,
+                    feed_previous=bool(self.test)
+                    )
         #print(self.test)
 
         if self.test:

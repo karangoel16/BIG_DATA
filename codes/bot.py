@@ -4,6 +4,7 @@ import os
 import tensorflow as tf
 import numpy as np
 import math
+import csv
 #Todo:- ask karan to have first character of class name as capital
 from dataset import dataset
 from model import RNNModel
@@ -59,6 +60,7 @@ class Bot:
         self.max_length = int(config.get('Dataset', 'maxLength'))
         self.watson_mode = config['Bot'].getboolean('watsonMode')
         self.auto_encode = config['Bot'].getboolean('autoEncode')
+        self.attention = config['Bot'].getboolean('attention')
         self.corpus = config.get('Bot', 'corpus') #Todo:- Fix this hardcode
         self.dataset_tag = ""
         self.hidden_size = int(config.get('Model', 'hiddenSize'))
@@ -120,43 +122,66 @@ class Bot:
             self.writer.add_graph(session.graph)
 
         print('Training begining (press Ctrl+C to save and exit)...')
+        csv_name = self.root_dir + self._get_csv_name()
+        print("Will be writing data to:", csv_name)
+        with open(csv_name, "a") as f:
+            print("opened th csv file")
+            wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+            row_data = []
+            try:
+                if self.current_epoch == self.epochs:
+                    #TODO: User input if neccessary
+                    print("Current epoch is same as total required epochs")
+                    return
 
-        try:
-            if self.current_epoch == self.epochs:
-                #TODO: User input if neccessary
-                return
-            for epoch in range(self.current_epoch, self.epochs):
-                print(
-                      "\n----- Epoch {}/{} ; (lr={}) -----".format(
-                        epoch+1,
-                        self.epochs,
-                        self.learning_rate
-                        )
-                      )
-                batches = self.text_data.getBatches()
-                local_step = 0
+                #wr.writerow(["global_step", "epoch", "loss", "perplexity"])
+                for epoch in range(self.current_epoch, self.epochs):
 
-                for curr_batch in batches:
-                    ops, feed_dict = self.model.step(curr_batch)
-                    assert len(ops) == 2
-                    _, loss, summary = session.run(ops + tuple([merged_summaries]), feed_dict)
-                    self.writer.add_summary(summary, self.global_step)
-                    self.global_step += 1
-                    local_step += 1
+                    print(
+                          "\n----- Epoch {}/{} ; (lr={}) -----".format(
+                            epoch+1,
+                            self.epochs,
+                            self.learning_rate
+                            )
+                          )
+                    batches = self.text_data.getBatches()
+                    local_step = 0
 
-                    if self.global_step % 100 == 0:
-                        perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                        print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep %d" %  (local_step, len(batches), loss, perplexity, self.global_step))
+                    for curr_batch in batches:
+                        ops, feed_dict = self.model.step(curr_batch)
+                        assert len(ops) == 2
+                        _, loss, summary = session.run(ops + tuple([merged_summaries]), feed_dict)
+                        self.writer.add_summary(summary, self.global_step)
+                        self.global_step += 1
+                        local_step += 1
 
+                        if self.global_step % 100 == 0:
+                            perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
+                            print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep %d" %  (local_step, len(batches), loss, perplexity, self.global_step))
 
-                    #Save checkpoint
-                    if self.global_step % self.save_ckpt_at == 0:
-                        self._save_session(session)
-                self.current_epoch += 1
-        except (KeyboardInterrupt, SystemExit):
-            print("Saving state and Exiting the program")
+                            row_data.append([self.global_step, epoch, loss, perplexity])
+                        #Save checkpoint
+                        if self.global_step % self.save_ckpt_at == 0:
+                            self._save_session(session)
+                            print("Writing data to csv")
+                            wr.writerows(row_data)
+                            print("Write complete")
+                            row_data = []
+                    self.current_epoch += 1
+            except (KeyboardInterrupt, SystemExit):
+                print("Saving state and Exiting the program")
+                wr.writerows(row_data)
+                print("Written data to file")
 
         self._save_session(session)
+
+    def _get_csv_name(self):
+        if self.init_embeddings:
+            return "/data_word2vec.csv"
+        elif self.attention:
+            return "/data_attention.csv"
+        else:
+            return "/data_tokenizer.csv"
 
     def predict_test_set(self, session):
         with open(os.path.join(self.root_dir, self.TEST_IN_NAME), 'r') as f:

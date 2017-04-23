@@ -42,8 +42,8 @@ class Bot:
         self.MODEL_EXT = config.get('Bot', 'modelExt')
         self.CONFIG_FILENAME = config.get('Bot', 'configFilename')
         self.CONFIG_VERSION = config.get('Bot', 'configVersion')
-        self.TEST_IN_NAME = config.get('Bot', 'testInName')
-        self.TEST_OUT_SUFFIX = config.get('Bot', 'testOutSuffix')
+        self.TEST_IN_NAME = os.path.join(DirName,config.get('Bot', 'testInName'))
+        self.TEST_OUT_SUFFIX = os.path.join(DirName,config.get('Bot', 'testOutSuffix'))
         self.SENTENCES_PREFIX = ['Q: ', 'A: ']
         self.reset = None
         self.create_dataset = None
@@ -75,7 +75,8 @@ class Bot:
         self.embedding_source = config.get("Bot", "embeddingSource")
         self.model_tag = None
         self.test = config['General'].getboolean('test')
-        print(self.init_embeddings)
+        self.file = config['General'].getboolean('file')
+        #print(self.init_embeddings)
 
 #Here main is called , from where it is bifurcated according to the inputs that we get from the config file
 
@@ -113,6 +114,17 @@ class Bot:
             return 
         elif self.test: 
             self.interactive_main(self.session);
+        elif self.file:
+            #try:
+            with open(self.TEST_IN_NAME,"r") as f:
+                    #try:
+                with open(self.TEST_OUT_SUFFIX,'w') as output:
+                    for line in f:
+                        print(self.predict_daemon(line));
+                    #except:
+                        #print("Writing in file is a problem")
+            #except:
+            #    print("Open file error")
         else:
             self.train_model(self.session)
 
@@ -277,10 +289,10 @@ class Bot:
         return answer
 
     def predict_daemon(self,sentence):
-        return self.text_data.sequence2str(
-            self.predict_single(sentence),
-            clean = True
-            )
+            print(sentence)
+            answer=self.predict_single(sentence)
+            print(answer)
+            return self.text_data.sequence2str(answer,cl = True)
 
     def close_daemon(self):
         print("Daemon Existing .. ")

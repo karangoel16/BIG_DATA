@@ -40,7 +40,7 @@ class initializer:
 #maxLenEnco
 
 class RNNModel:
-    def __init__(self,text_data):
+    def __init__(self, text_data, args):
         config = cp.ConfigParser()
         self.DirName='/'.join(os.getcwd().split('/')[:-1]);
         config.read(self.DirName+"/Database/Config.ini");
@@ -64,6 +64,10 @@ class RNNModel:
         self.learningRate = float(config.get('Model', 'learningRate'))
         self.attention = config['Bot'].getboolean('attention')
         self.build_network()           #this is done to compute the graph
+        if self.args.test:
+            self.test = True
+        if self.args.attention:
+            self.attention = True
 
     def build_network(self):
         outputProjection = None
@@ -94,7 +98,9 @@ class RNNModel:
                         self.textdata.vocab_size()),
                     self.dtype)
 
-        with tf.device('/gpu:0'):
+        # All the model params are initialized on CPU memory by default
+        # set this to self.device() if you want this also on GPU memory
+        with tf.device('/cpu:0'):
             enc_dec_cell = tf.contrib.rnn.BasicLSTMCell(self.hiddenSize,
                                                     state_is_tuple=True)
             if not self.test:  # TODO: Should use a placeholder instead
@@ -134,7 +140,7 @@ class RNNModel:
                     output_projection=outputProjection.getWeights() if outputProjection else None,
                     feed_previous=bool(self.test)
                     )
-        #print(self.test)
+            #print(self.test)
 
         if self.test:
             #print(decoder_outputs)
@@ -145,7 +151,8 @@ class RNNModel:
         
         else:
             #this is when we are not testing on our model but train our system
-            with tf.device('/gpu:0'):
+            # set device (gpu) in Config.ini
+            with tf.device(self.get_device()):
                 self.loss_fct = tf.contrib.legacy_seq2seq.sequence_loss(
                     decoder_outputs,
                     self.decoder_targets,

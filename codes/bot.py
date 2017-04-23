@@ -92,7 +92,7 @@ class Bot:
                             help='gpu/cpu device like /gpu:0|/gpu:1|/cpu:0.')
         self.args = parser.parse_args()
 
-    def update_settings(self, args):
+    def update_settings(self):
         if self.args.test:
             self.test = True
         if self.args.reset:

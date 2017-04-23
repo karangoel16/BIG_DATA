@@ -67,7 +67,19 @@ class RNNModel:
         if self.args.test:
             self.test = True
         if self.args.attention:
-            self.attention = True
+            self.attention = True 
+            
+    def get_device(self):
+        if 'cpu' in self.device:
+            
+            return self.device
+                                        elif 'gpu' in self.device:
+                                                        return self.device
+                                                            elif self.device is None:
+                                                                            return None
+                                                                                else:
+                                                                                                print('Warning: Error detected in device name: {}, switch to default device'.format(self.device))
+                                                                                                            return None
 
     def build_network(self):
         outputProjection = None

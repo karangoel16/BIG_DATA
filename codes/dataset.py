@@ -72,7 +72,7 @@ class dataset:
         self.autoencode=Config['Bot'].getboolean('autoEncode')
         dict_temp={};
         self.var_corpus_dict=self.DirName+"/Database/file_dict"+str(self.choice)+Config.get('Dataset','maxLength')+str(self.vocabularySize)+".pkl"
-        if self.args.test:
+        if args.test:
             self.test = True
 #we will save all the values in the dictionary in one go and will save this file
         self.load_data();

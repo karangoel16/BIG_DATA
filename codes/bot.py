@@ -13,9 +13,11 @@ DirName='/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
 config = configparser.ConfigParser()
 config.read(DirName+"/Database/Config.ini");
 
+
+#this is our main frame work where all the training takes place 
 class Bot:
     "Bot framework which integrates all the component"
-
+#intialising all the parameters needed in the code
     def __init__(self):
         #TODO:- Instead of using command line args we will go for config only
         # set the appropriate values from config compared to what was use as args
@@ -48,6 +50,8 @@ class Bot:
         self.device = config.get('General', 'device')
         self.twitter = config['General'].getboolean('twitter')
 
+#some more parameters are loaded in the function all are read from the config file and then it is used accordingly
+    
     def load_config(self):
         #Todo:- Load all the required values from the required configs
         self.keep_all = config['General'].getboolean('keepall')
@@ -73,8 +77,10 @@ class Bot:
         self.test = config['General'].getboolean('test')
         print(self.init_embeddings)
 
+#Here main is called , from where it is bifurcated according to the inputs that we get from the config file
+
     def main(self):
-        #Todo:- sample call for Bot().main(rootdir="..", model="..", ....)
+
         print("SmartGator Intelligent chatbot")
 
         self.root_dir = os.getcwd() 
@@ -371,6 +377,8 @@ class Bot:
         else:
             print('Nothing apriorily exists, starting fresh from direwctory: {}'.format(self.model_dir))
 
+#this function is to save model after every few iteration
+    
     def _save_session(self,session):
         print('Chkpnt reached: saving model .. ')
         self.save_model_params()
@@ -460,6 +468,8 @@ class Bot:
 
         return model_name + self.MODEL_EXT
 
+#this is used to define the place where and model will be instantiated
+    
     def get_device(self):
         if 'cpu' in self.device:
             return self.device

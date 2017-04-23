@@ -7,6 +7,7 @@ import math
 import csv
 import argparse
 #Todo:- ask karan to have first character of class name as capital
+from time import time
 from dataset import dataset
 from model import RNNModel
 
@@ -179,7 +180,7 @@ class Bot:
                           )
                     batches = self.text_data.getBatches()
                     local_step = 0
-
+                    start_time = time()
                     for curr_batch in batches:
                         ops, feed_dict = self.model.step(curr_batch)
                         assert len(ops) == 2
@@ -189,10 +190,12 @@ class Bot:
                         local_step += 1
 
                         if self.global_step % 100 == 0:
+                            end_time = time()
+                            time_consumed = int(end_time - start_time)
                             perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                            print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep %d" %  (local_step, len(batches), loss, perplexity, self.global_step))
-
+                            print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep %d -- TimeConsumed %d sec" %  (local_step, len(batches), loss, perplexity, self.global_step, time_consumed))
                             row_data.append([self.global_step, epoch, loss, perplexity])
+                            start_time = time()
                         #Save checkpoint
                         if self.global_step % self.save_ckpt_at == 0:
                             self._save_session(session)

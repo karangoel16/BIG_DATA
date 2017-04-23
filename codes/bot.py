@@ -153,6 +153,7 @@ class Bot:
                         #print("Writing in file is a problem")
             #except:
             #    print("Open file error")
+            self.close_daemon();
         else:
             self.train_model(self.session)
 
@@ -325,7 +326,7 @@ class Bot:
             return self.text_data.sequence2str(answer,cl = True)
 
     def close_daemon(self):
-        print("Daemon Existing .. ")
+        print("Daemon Exiting .. ")
         self.session.close()
         print("Done.")
 

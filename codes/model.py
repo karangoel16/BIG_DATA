@@ -63,23 +63,23 @@ class RNNModel:
         self.embeddingSize = int(config.get('Model', 'embeddingSize'))
         self.learningRate = float(config.get('Model', 'learningRate'))
         self.attention = config['Bot'].getboolean('attention')
+        self.device = config.get('General', 'device')
         self.build_network()           #this is done to compute the graph
-        if self.args.test:
+        if args.test:
             self.test = True
-        if self.args.attention:
+        if args.attention:
             self.attention = True 
             
     def get_device(self):
         if 'cpu' in self.device:
-            
             return self.device
-                                        elif 'gpu' in self.device:
-                                                        return self.device
-                                                            elif self.device is None:
-                                                                            return None
-                                                                                else:
-                                                                                                print('Warning: Error detected in device name: {}, switch to default device'.format(self.device))
-                                                                                                            return None
+        elif 'gpu' in self.device:
+            return self.device
+        elif self.device is None:
+            return None
+        else:
+            print('Warning: Error detected in device name: {}, switch to default device'.format(self.device))
+            return None
 
     def build_network(self):
         outputProjection = None

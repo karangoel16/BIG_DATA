@@ -75,7 +75,7 @@ class Bot:
         self.embedding_source = config.get("Bot", "embeddingSource")
         self.model_tag = None
         self.test = config['General'].getboolean('test')
-        self.file = config['General'].getboolean('file')
+        self.file_ = config['General'].getboolean('file')
         #print(self.init_embeddings)
 
     def load_args(self):
@@ -140,20 +140,21 @@ class Bot:
             self.load_embedding(self.session)
         if self.twitter:
             return 
-        elif self.test: 
-            self.interactive_main(self.session);
-        elif self.file:
-            #try:
-            with open(self.TEST_IN_NAME,"r") as f:
-                    #try:
-                with open(self.TEST_OUT_SUFFIX,'w') as output:
-                    for line in f:
-                        print(self.predict_daemon(line));
-                    #except:
-                        #print("Writing in file is a problem")
-            #except:
-            #    print("Open file error")
-            self.close_daemon();
+        elif self.file_:
+            try:
+                with open(self.TEST_IN_NAME,"r") as f:
+                    try:
+                        with open(self.TEST_OUT_SUFFIX,'w') as output:
+                            for line in f:
+                        #print(self.predict_daemon(line));
+                                output.write(self.predict_daemon(line[:-1])+"\n")
+                    except:
+                        print("Writing in file is a problem")
+            except:
+                print("Open file error")
+        elif self.test:
+             self.interactive_main(self.session);
+
         else:
             self.train_model(self.session)
 
@@ -306,6 +307,7 @@ class Bot:
 
     def predict_single(self, question, question_seq=None):
         #print(self.text_data.test_())
+        #print(question)
         batch = self.text_data.sentence2enco(question)
         if not batch:
             return None
@@ -323,7 +325,7 @@ class Bot:
             print(sentence)
             question_seq=[]
             answer=self.predict_single(str(sentence),question_seq)
-            print(answer)
+            #print(answer)
             return self.text_data.sequence2str(answer,cl = True)
 
     def close_daemon(self):

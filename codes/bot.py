@@ -321,7 +321,8 @@ class Bot:
 
     def predict_daemon(self,sentence):
             print(sentence)
-            answer=self.predict_single(sentence)
+            question_seq=[]
+            answer=self.predict_single(str(sentence),question_seq)
             print(answer)
             return self.text_data.sequence2str(answer,cl = True)
 

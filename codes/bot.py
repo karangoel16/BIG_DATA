@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 import math
 import csv
+import argparse
 #Todo:- ask karan to have first character of class name as capital
 from dataset import dataset
 from model import RNNModel
@@ -22,8 +23,6 @@ class Bot:
         #TODO:- Instead of using command line args we will go for config only
         # set the appropriate values from config compared to what was use as args
         # in original code
-
-        self.text_data = dataset()  # Dataset
         self.model = None  # Sequence to sequence model
         self.verbose = None
         # Tensorflow utilities for convenience saving/logging
@@ -77,6 +76,31 @@ class Bot:
         self.test = config['General'].getboolean('test')
         print(self.init_embeddings)
 
+    def load_args(self):
+        parser = argparse.ArgumentParser(description='SmartGator config arguments.')
+        parser.add_argument("--test", "-t", dest="test", action="store_true",
+                            help="Argument to run the code in test mode.")
+        parser.add_argument("--reset", "-r", dest="reset", action="store_true",
+                            help="To remove previously saved model and start fresh.")
+        parser.add_argument("-w", dest="word2vec", action="store_true",
+                            help="to run the code in word2vec mode.")
+        parser.add_argument("-a", dest="attention", action="store_true",
+                            help="to run the code in attention mechanism code.")
+        parser.add_argument("-d", dest="device", action="store", default=None,
+                            help='gpu/cpu device like /gpu:0|/gpu:1|/cpu:0.')
+        self.args = parser.parse_args()
+
+    def update_settings(self, args):
+        if self.args.test:
+            self.test = True
+        if self.args.reset:
+            self.reset = True
+        if self.args.word2vec:
+            self.init_embeddings = True
+        if self.args.attention:
+            self.attention = True
+        if self.args.device:
+            self.device = self.args.device
 #Here main is called , from where it is bifurcated according to the inputs that we get from the config file
 
     def main(self):
@@ -88,10 +112,13 @@ class Bot:
         #self.text_data = dataset()
         self.load_config()
         self.load_model_params()
+        self.load_args()
+        self.update_settings()
+        self.text_data = dataset(self.args)
 
-        print(self.text_data)
+        print("Utilizing device:"+self.get_device())
         with tf.device(self.get_device()):
-            self.model = RNNModel(self.text_data)
+            self.model = RNNModel(self.text_data, self.args)
 
         #print (self._get_summary_name())
         #init_op = tf.global_variables_initializer()

@@ -92,7 +92,7 @@ class RNNModel:
                 dtype=self.dtype
             )
 
-            def sampledSoftmax(inputs, labels):
+            def sampledSoftmax(labels,inputs):
               
             #la#bels = tf.reshape(labels, [-1, 1])  # Add one dimension (nb of true classes, here 1)
                 labels = tf.reshape(labels, [-1, 1])  # Add one dimension (nb of true classes, here 1)

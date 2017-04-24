@@ -24,7 +24,7 @@ class dataset:
     '''
         We need the DirName that is the dir where our code is present so that we can run the set on it
     '''
-    def __init__(self):
+    def __init__(self, args):
         '''
             args
                 1.Dataset to be loaded
@@ -72,6 +72,8 @@ class dataset:
         self.autoencode=Config['Bot'].getboolean('autoEncode')
         dict_temp={};
         self.var_corpus_dict=self.DirName+"/Database/file_dict"+str(self.choice)+Config.get('Dataset','maxLength')+str(self.vocabularySize)+".pkl"
+        if args.test:
+            self.test = True
 #we will save all the values in the dictionary in one go and will save this file
         self.load_data();
         print('Conversation loaded.')

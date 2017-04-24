@@ -5,7 +5,9 @@ import tensorflow as tf
 import numpy as np
 import math
 import csv
+import argparse
 #Todo:- ask karan to have first character of class name as capital
+from time import time
 from dataset import dataset
 from model import RNNModel
 
@@ -22,8 +24,6 @@ class Bot:
         #TODO:- Instead of using command line args we will go for config only
         # set the appropriate values from config compared to what was use as args
         # in original code
-
-        self.text_data = dataset()  # Dataset
         self.model = None  # Sequence to sequence model
         self.verbose = None
         # Tensorflow utilities for convenience saving/logging
@@ -42,8 +42,8 @@ class Bot:
         self.MODEL_EXT = config.get('Bot', 'modelExt')
         self.CONFIG_FILENAME = config.get('Bot', 'configFilename')
         self.CONFIG_VERSION = config.get('Bot', 'configVersion')
-        self.TEST_IN_NAME = config.get('Bot', 'testInName')
-        self.TEST_OUT_SUFFIX = config.get('Bot', 'testOutSuffix')
+        self.TEST_IN_NAME = os.path.join(DirName,config.get('Bot', 'testInName'))
+        self.TEST_OUT_SUFFIX = os.path.join(DirName,config.get('Bot', 'testOutSuffix'))
         self.SENTENCES_PREFIX = ['Q: ', 'A: ']
         self.reset = None
         self.create_dataset = None
@@ -75,8 +75,34 @@ class Bot:
         self.embedding_source = config.get("Bot", "embeddingSource")
         self.model_tag = None
         self.test = config['General'].getboolean('test')
-        print(self.init_embeddings)
+        self.file_ = config['General'].getboolean('file')
+        #print(self.init_embeddings)
 
+    def load_args(self):
+        parser = argparse.ArgumentParser(description='SmartGator config arguments.')
+        parser.add_argument("--test", "-t", dest="test", action="store_true",
+                            help="Argument to run the code in test mode.")
+        parser.add_argument("--reset", "-r", dest="reset", action="store_true",
+                            help="To remove previously saved model and start fresh.")
+        parser.add_argument("-w", dest="word2vec", action="store_true",
+                            help="to run the code in word2vec mode.")
+        parser.add_argument("-a", dest="attention", action="store_true",
+                            help="to run the code in attention mechanism code.")
+        parser.add_argument("-d", dest="device", action="store", default=None,
+                            help='gpu/cpu device like /gpu:0|/gpu:1|/cpu:0.')
+        self.args = parser.parse_args()
+
+    def update_settings(self):
+        if self.args.test:
+            self.test = True
+        if self.args.reset:
+            self.reset = True
+        if self.args.word2vec:
+            self.init_embeddings = True
+        if self.args.attention:
+            self.attention = True
+        if self.args.device:
+            self.device = self.args.device
 #Here main is called , from where it is bifurcated according to the inputs that we get from the config file
 
     def main(self):
@@ -88,10 +114,13 @@ class Bot:
         #self.text_data = dataset()
         self.load_config()
         self.load_model_params()
+        self.load_args()
+        self.update_settings()
+        self.text_data = dataset(self.args)
 
-        print(self.text_data)
+        print("Utilizing device:"+self.get_device())
         with tf.device(self.get_device()):
-            self.model = RNNModel(self.text_data)
+            self.model = RNNModel(self.text_data, self.args)
 
         #print (self._get_summary_name())
         #init_op = tf.global_variables_initializer()
@@ -111,8 +140,21 @@ class Bot:
             self.load_embedding(self.session)
         if self.twitter:
             return 
-        elif self.test: 
-            self.interactive_main(self.session);
+        elif self.file_:
+            try:
+                with open(self.TEST_IN_NAME,"r") as f:
+                    try:
+                        with open(self.TEST_OUT_SUFFIX,'w') as output:
+                            for line in f:
+                        #print(self.predict_daemon(line));
+                                output.write(self.predict_daemon(line[:-1])+"\n")
+                    except:
+                        print("Writing in file is a problem")
+            except:
+                print("Open file error")
+        elif self.test:
+             self.interactive_main(self.session);
+
         else:
             self.train_model(self.session)
 
@@ -152,7 +194,7 @@ class Bot:
                           )
                     batches = self.text_data.getBatches()
                     local_step = 0
-
+                    start_time = time()
                     for curr_batch in batches:
                         ops, feed_dict = self.model.step(curr_batch)
                         assert len(ops) == 2
@@ -162,10 +204,12 @@ class Bot:
                         local_step += 1
 
                         if self.global_step % 100 == 0:
+                            end_time = time()
+                            time_consumed = int(end_time - start_time)
                             perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                            print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep %d" %  (local_step, len(batches), loss, perplexity, self.global_step))
-
+                            print("----- Step %d/%d -- Loss %.2f -- Perplexity %.2f -- GlobalStep %d -- TimeConsumed %d sec" %  (local_step, len(batches), loss, perplexity, self.global_step, time_consumed))
                             row_data.append([self.global_step, epoch, loss, perplexity])
+                            start_time = time()
                         #Save checkpoint
                         if self.global_step % self.save_ckpt_at == 0:
                             self._save_session(session)
@@ -263,6 +307,7 @@ class Bot:
 
     def predict_single(self, question, question_seq=None):
         #print(self.text_data.test_())
+        #print(question)
         batch = self.text_data.sentence2enco(question)
         if not batch:
             return None
@@ -277,13 +322,14 @@ class Bot:
         return answer
 
     def predict_daemon(self,sentence):
-        return self.text_data.sequence2str(
-            self.predict_single(sentence),
-            clean = True
-            )
+            print(sentence)
+            question_seq=[]
+            answer=self.predict_single(str(sentence),question_seq)
+            #print(answer)
+            return self.text_data.sequence2str(answer,cl = True)
 
     def close_daemon(self):
-        print("Daemon Existing .. ")
+        print("Daemon Exiting .. ")
         self.session.close()
         print("Done.")
 

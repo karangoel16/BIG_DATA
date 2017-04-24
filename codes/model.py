@@ -21,10 +21,11 @@ class initializer:
             )
             self.b = tf.get_variable(
                 'bias',
-                shape[1],
+                shape[0],
                 initializer=tf.constant_initializer(),
                 dtype=dtype
             )
+            self.W=tf.transpose(self.W)
     def get_weight(self):
         return self.W, self.b
 
@@ -86,12 +87,14 @@ class RNNModel:
         # Sampled softmax only makes sense if we sample less than vocabulary size.
         if 0 < self.softmaxSamples < self.textdata.vocab_size():
             outputProjection = initializer(
-                (self.hiddenSize, self.textdata.vocab_size()),
+                (self.textdata.vocab_size(),self.hiddenSize),
                 scope='softmax_projection',
                 dtype=self.dtype
             )
 
             def sampledSoftmax(inputs, labels):
+              
+            #la#bels = tf.reshape(labels, [-1, 1])  # Add one dimension (nb of true classes, here 1)
                 labels = tf.reshape(labels, [-1, 1])  # Add one dimension (nb of true classes, here 1)
 
                 # We need to compute the sampled_softmax_loss using 32bit floats to
@@ -104,8 +107,8 @@ class RNNModel:
                     tf.nn.sampled_softmax_loss(
                         local_weight,  # Should have shape [num_classes, dim]
                         local_bias,
-                        local_inputs,
                         labels,
+                        local_inputs,
                         self.softmaxSamples,
                         self.textdata.vocab_size()),
                     self.dtype)
@@ -137,7 +140,7 @@ class RNNModel:
                     self.textdata.vocab_size(),
                     self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
                     embedding_size=self.embeddingSize,  # Dimension of each word
-                    output_projection=outputProjection.getWeights() if outputProjection else None,
+                    output_projection=outputProjection.get_weight() if outputProjection else None,
                     feed_previous=bool(self.test)
                     )
             else:
@@ -149,7 +152,7 @@ class RNNModel:
                     self.textdata.vocab_size(),
                     self.textdata.vocab_size(),  # Both encoder and decoder have the same number of class
                     embedding_size=self.embeddingSize,  # Dimension of each word
-                    output_projection=outputProjection.getWeights() if outputProjection else None,
+                    output_projection=outputProjection.get_weight() if outputProjection else None,
                     feed_previous=bool(self.test)
                     )
             #print(self.test)

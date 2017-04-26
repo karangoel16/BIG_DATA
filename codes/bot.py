@@ -108,18 +108,16 @@ class Bot:
         print("SmartGator Intelligent chatbot")
 
         self.root_dir = os.getcwd() 
-
-        #self.text_data = dataset()
         self.load_config()
         self.load_model_params()
         self.load_args()
         self.update_settings()
         self.text_data = dataset(self.args)
 
-        print("Utilizing device:"+self.get_device())
-        with tf.device(self.get_device()):
-            self.model = RNNModel(self.text_data, self.args)
+        # RNN Model Initialized #
+        self.model = RNNModel(self.text_data, self.args)
 
+        # Handlers to write and save learned models #
         self.writer = tf.summary.FileWriter(self._get_summary_name())
         self.saver = tf.train.Saver(max_to_keep=200, write_version=tf.train.SaverDef.V1)
 
@@ -130,10 +128,15 @@ class Bot:
 
         print("Initializing tf variables")
         self.session.run(tf.global_variables_initializer())
-        #print(self.test)
+
+        # If a previous model exists load it and procedd from last run step #
         self.manage_previous_model(self.session)
+        
+        # If using word2vec model we need to laod word vectors #
         if self.init_embeddings:
             self.load_embedding(self.session)
+
+        # Twitter Interface up or not #
         if self.twitter:
             return 
         elif self.file_:
@@ -142,26 +145,27 @@ class Bot:
                     try:
                         with open(self.TEST_OUT_SUFFIX,'w') as output:
                             for line in f:
-                        #print(self.predict_daemon(line));
                                 output.write(self.predict_daemon(line[:-1])+"\n")
                     except:
                         print("Writing in file is a problem")
             except:
                 print("Open file error")
+
+        # Else if in CLI testing mode #
         elif self.test:
              self.interactive_main(self.session);
 
+        # Else in training mode #
         else:
             self.train_model(self.session)
 
         self.session.close()
         print("Say Bye Bye to SmartGator! ;)")
     
-    # Implementtion done, Testing remains
+    # Function to train the chatbot #
     def train_model(self, session):
         merged_summaries = tf.summary.merge_all()
 
-        #Todo:- See if we can try making it possible to restore from previous run
         if self.global_step == 0:
             self.writer.add_graph(session.graph)
 

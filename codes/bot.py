@@ -18,7 +18,7 @@ config.read(DirName+"/Database/Config.ini");
 #this is our main frame work where all the training takes place 
 class Bot:
     "Bot framework which integrates all the component"
-#intialising all the parameters needed in the code
+    #intialising all the parameters needed in the code
     def __init__(self):
         #TODO:- Instead of using command line args we will go for config only
         # set the appropriate values from config compared to what was use as args

@@ -5,27 +5,26 @@ import numpy as np
 import math
 import csv
 import argparse
-#Todo:- ask karan to have first character of class name as capital
 from time import time
 from dataset import dataset
 from model import RNNModel
 
+# Directory name of parent dir # 
 DirName='/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
 config = configparser.ConfigParser()
 config.read(DirName+"/Database/Config.ini");
 
 
-#this is our main frame work where all the training takes place 
+# Main class file which containf all the methods for various model initialisation, training and testing # 
 class Bot:
-    "Bot framework which integrates all the component"
-    #intialising all the parameters needed in the code
+    
+    # Intialising all the parameters needed in the code #
     def __init__(self):
-        #TODO:- Instead of using command line args we will go for config only
-        # set the appropriate values from config compared to what was use as args
-        # in original code
-        self.model = None  # Sequence to sequence model
+        
+        self.model = None
         self.verbose = None
-        # Tensorflow utilities for convenience saving/logging
+
+        # Tensorflow utilities for convenience saving/logging #
         self.writer = None
         self.saver = None
         self.model_dir = ''
@@ -33,9 +32,9 @@ class Bot:
         self.DirName = DirName	
         self.session = None
         self.model_tag = None
-        # Filename and directories constants
-        # Todo:- Move following to seperate config files
-        self.root_dir = DirName#'/'.join(os.getcwd().split('/')[:-1])
+
+        # Initialization Params are provided using Config.ini stored in Database/ #
+        self.root_dir = DirName
         self.MODEL_DIR_BASE = config.get('Bot', 'modelDirBase')
         self.MODEL_NAME_BASE = config.get('Bot', 'modelNameBase')
         self.MODEL_EXT = config.get('Bot', 'modelExt')
@@ -49,8 +48,7 @@ class Bot:
         self.device = config.get('General', 'device')
         self.twitter = config['General'].getboolean('twitter')
 
-#some more parameters are loaded in the function all are read from the config file and then it is used accordingly
-    
+    # Runtime param: provided using Config.ini #    
     def load_config(self):
         #Todo:- Load all the required values from the required configs
         self.keep_all = config['General'].getboolean('keepall')
@@ -75,8 +73,8 @@ class Bot:
         self.model_tag = None
         self.test = config['General'].getboolean('test')
         self.file_ = config['General'].getboolean('file')
-        #print(self.init_embeddings)
 
+    # Some command line argument params #
     def load_args(self):
         parser = argparse.ArgumentParser(description='SmartGator config arguments.')
         parser.add_argument("--test", "-t", dest="test", action="store_true",
@@ -102,8 +100,9 @@ class Bot:
             self.attention = True
         if self.args.device:
             self.device = self.args.device
-#Here main is called , from where it is bifurcated according to the inputs that we get from the config file
 
+    ######################### Main function of class Bot ##########################
+    # As per the input/configuration provided, corresponding task is accomplished #        
     def main(self):
 
         print("SmartGator Intelligent chatbot")
@@ -121,8 +120,6 @@ class Bot:
         with tf.device(self.get_device()):
             self.model = RNNModel(self.text_data, self.args)
 
-        #print (self._get_summary_name())
-        #init_op = tf.global_variables_initializer()
         self.writer = tf.summary.FileWriter(self._get_summary_name())
         self.saver = tf.train.Saver(max_to_keep=200, write_version=tf.train.SaverDef.V1)
 

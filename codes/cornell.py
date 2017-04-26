@@ -47,5 +47,5 @@ class cornell_data:
     def getconversation(self):
         return self.conversation;
         
-#t=cornell_data('/home/karan/Documents/GIT_HUB/BIG_DATA/Corpus/Cornel/');
+#t=cornell_data('/home/karan/Downloads/GIT_HUB/BIG_DATA/Corpus/Cornel/');
 #print(t.getconversation());

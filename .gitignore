@@ -1,8 +1,8 @@
 /GARBAGE/*
 /Corpus/*
-/Database/*
+*.p
 *.ipynb
 *.csv
 /.project
 /.pydevproject
-
+*.pyc

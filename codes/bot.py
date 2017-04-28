@@ -138,7 +138,9 @@ class Bot:
 
         # Twitter Interface up or not #
         if self.twitter:
-            return 
+            return
+
+        # Batch Testing #
         elif self.file_:
             try:
                 with open(self.TEST_IN_NAME,"r") as f:
@@ -233,39 +235,12 @@ class Bot:
         else:
             return "/data_tokenizer.csv"
 
-    def predict_test_set(self, session):
-        with open(os.path.join(self.root_dir, self.TEST_IN_NAME), 'r') as f:
-            lines = f.readlines()
-
-        model_list = self._get_model_list()
-        if not modelList:
-            print('Please Train the model first before predicting values')
-            return
-
-        for model in model_list:
-            print('Restoring previous model from {}'.format(model))
-            self.saver.restore(session, model)
-            print('Testing...')
-
-            save_name = model_name[:-len(self.MODEL_EXT)] + self.TEST_OUT_SUFFIX
-            with open(save_name, 'w') as f:
-                ignored_sen = 0
-                for line in lines:
-                    question = line[:-1]
-
-                    answer = self.predict_single(question)
-                    if not answer:
-                        ignored_sen += 1
-                        continue
-
-                    prediction = '{x[0]}{0}\n{x[1]}{1}\n\n'.format(question, self.text_data.sequence2str(answer, clean=True), x=self.SENTENCES_PREFIX)
-                    f.write(prediction)
-                print('Prediction finished, {}/{} sentences ignored (too long)'.format(ignored_sen, len(lines)))
-
+    # List all the available models #
     def _get_model_list(self):
         model_list = [os.path.join(self.model_dir, f) for f in os.listdir(self.model_dir) if f.endswith(self.MODEL_EXT)]
         return sorted(model_list)
 
+    # Command line interface for bot testing #
     def interactive_main(self,session):
         print('Initiating interactive mode .. ')
         print('Enter your query or press ENTER to quit!')
@@ -289,6 +264,7 @@ class Bot:
 
             print()
 
+    # Function to interface with twitter module .. receive query and send reply #
     def interactive_main_twitter(self,session,question):
         #print('Initiating interactive mode .. ')
         #print('Enter your query or press ENTER to quit!')
@@ -305,6 +281,8 @@ class Bot:
 
         return self.text_data.sequence2str(answer,cl=True)
 
+    # Function to predict output sequence for single input sequence         #
+    # Used in interactive_main_twitter, interactive_main                    #
     def predict_single(self, question, question_seq=None):
         #print(self.text_data.test_())
         #print(question)
@@ -321,6 +299,7 @@ class Bot:
         answer = self.text_data.deco2sentence(output)
         return answer
 
+    # Used in Batch testing to call predict_single on every input #
     def predict_daemon(self,sentence):
             print(sentence)
             question_seq=[]
@@ -333,6 +312,7 @@ class Bot:
         self.session.close()
         print("Done.")
 
+    # Load word embeddings for word2vec model #
     def load_embedding(self,session):
         # TODO :- see if we need this load embedding model as of now
         with tf.variable_scope("embedding_rnn_seq2seq/rnn/embedding_wrapper",reuse=True):
@@ -348,8 +328,7 @@ class Bot:
         if self.global_step != 0:
             return
 
-        # Define new model here #
-        # TO DO 406-434#
+        # Change location accordingly #
         embeddings_path = os.path.join('/tmp', self.embedding_source)
         
         embeddings_format = os.path.splitext(embeddings_path)[1][1:]
@@ -384,17 +363,18 @@ class Bot:
                     else:
                         raise Exception("Unkown format for embeddings: %s " % embeddings_format)
 
-        # PCA Decomposition to reduce word2vec dimensionality
+        # PCA Decomposition to reduce word2vec dimensionality #
         if self.embedding_size < vector_size:
             U, s, Vt = np.linalg.svd(initW, full_matrices=False)
             S = np.zeros((vector_size, vector_size), dtype=complex)
             S[:vector_size, :vector_size] = np.diag(s)
             initW = np.dot(U[:, :self.embedding_size], S[:self.embedding_size, :self.embedding_size])
 
-        # Initialize input and output embeddings
+        # Initialize input and output embeddings #
         session.run(embedding_in.assign(initW))
         session.run(embedding_out.assign(initW))
 
+    # If previous model exsits, we relaunch the training from last run step #
     def manage_previous_model(self,session):
         model_name = self._get_model_name()
 
@@ -423,16 +403,16 @@ class Bot:
         else:
             print('Nothing apriorily exists, starting fresh from direwctory: {}'.format(self.model_dir))
 
-#this function is to save model after every few iteration
-    
+
+    # Save model after every few iteration #
     def _save_session(self,session):
         print('Chkpnt reached: saving model .. ')
         self.save_model_params()
         self.saver.save(session,self._get_model_name())
         print('Model saved.')
 
+    # Loads model params during testing and model restoration #
     def load_model_params(self):
-        #TO DO 494-556#
         self.model_dir = os.path.join(self.root_dir,self.MODEL_DIR_BASE)
         if self.model_tag:
             self.model_dir += '-'+self.model_dir
@@ -475,6 +455,7 @@ class Bot:
             print('current_epoch: {}'.format(self.current_epoch))
             print()
 
+    # Saves current state of model when training is interrupted or finished #
     def save_model_params(self):
         config = configparser.ConfigParser()
         general = {
@@ -514,8 +495,7 @@ class Bot:
 
         return model_name + self.MODEL_EXT
 
-#this is used to define the place where and model will be instantiated
-    
+    # Define the place where model will be instantiated #
     def get_device(self):
         if 'cpu' in self.device:
             return self.device

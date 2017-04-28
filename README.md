@@ -1,12 +1,11 @@
 Libraries needed to run this code
-
-nltk
-tensorflow
-os
-gzip
-configparser
+* nltk
+* tensorflow
+* gzip
+* configparser
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Need to save another file for twitter.ini in database with A_token,A_key,C_key,C_token run the iteration and you could make changes in the dataset accordingly
 
 Inputs required from the user , we need to set the following stuff
@@ -22,7 +21,7 @@ Twitter - True/False
 
 Test - CLI interface (True/False)
 
-##Twitter and Test can't run togther and if both are false then we will run training , if we have model saved it will start running the code again from the point we have left
+##Twitter and Test can't run togther and if both are false then we will run training by default. If we have an incomplete trained model, it will start running the code again from the point we have left.
 
 hiddenlayer size: (Number of cells required by the user)
 
@@ -42,10 +41,10 @@ Note :- To include embeddings we need to set initEmbeddings to be true
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-to see the loss graph follow the following steps 
+To see the loss graph follow the following steps: 
 
-go into codes folder and then from there call the following command
-
+Go into codes folder and then from there call the following command:
+```
 tensoboard --logdir save/
-
+```
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

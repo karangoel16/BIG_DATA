@@ -2,21 +2,16 @@ import os
 import tensorflow as tf
 import configparser as cp
 from dataset import batch
-#list of arguments to be given in this for the module to works
 
 class initializer:
     def __init__(self, shape, scope=None, dtype=None):
-        #TODO:- check if the shape of the weight is one or not
         assert len(shape) == 2
         self.scope = scope
-        #TODO:- Check if this thing is correct for self.W and self.b
-        #self.W = tf.truncated_normal(0.1, shape)
-        #self.b = tf.constant(0.1, shape[1])
         with tf.variable_scope('weights_' + self.scope):
             self.W = tf.get_variable(
                 'weights',
                 shape,
-                # initializer=tf.truncated_normal_initializer()  # TODO: Tune value (fct of input size: 1/sqrt(input_dim))
+                #initializer=tf.truncated_normal_initializer()
                 dtype=dtype
             )
             self.b = tf.get_variable(
@@ -29,15 +24,16 @@ class initializer:
         return self.W, self.b
 
     def __call__(self, X):
-        #TODO:- check if name scope is necessary
         with tf.name_scope(self.scope):
             return tf.matmul(X, self.W) + self.b
-    
-#list of args
-#learning rate 0.001
-#test True or False that will determine what will happen with our model 
-#maxLenDeco
-#maxLenEnco
+
+#####################################################
+# List of args (specified in Config.ini):           #
+# learning rate 0.001                               #
+# test True/False for testing/training              #
+# maxLenDeco: maximum length of decoded output      #
+# maxLenEnco: maximum length of input sequence      #
+#####################################################
 
 class RNNModel:
     def __init__(self, text_data, args):

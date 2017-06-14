@@ -1,4 +1,4 @@
-Libraries needed to run this code
+Libraries needed to run this project
 * nltk
 * tensorflow
 * gzip
